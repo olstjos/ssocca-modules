@@ -1,0 +1,7 @@
+name: ISED CCH Custom
+type: module
+description: Custom functionality for ISED Canadian Consumer Hub
+core: 8.x
+package: Custom
+dependencies:
+  - drupal:block

@@ -1,0 +1,5 @@
+contentimport.admin_settings:
+  title: 'Content Import'
+  parent: system.admin_config_content
+  description: 'Import Info Links and Complaint Links CSV.'
+  route_name: contentimport.admin_settings
