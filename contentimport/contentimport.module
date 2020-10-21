@@ -452,6 +452,18 @@ function get_record_errors($data) {
   return $errors;
 }
 
+function format_header($header, $contentType) {
+  foreach ($header as $key => $columnName) {
+    if ( $contentType == 'complaint_link' && in_array($columnName, ['field_link','field_link_fr']) ) {
+      $header[$key] = str_replace('field_link', 'field_link_complaint', $columnName);
+    } elseif ( $contentType == 'info_link' && in_array($columnName, ['field_link','field_link_fr']) ) {
+      $header[$key] = str_replace('field_link', 'field_link_info', $columnName);
+    }
+  }
+
+  return $header;
+}
+
 /**
  * To import data as Content type nodes.
  */
@@ -474,11 +486,13 @@ function create_node($filedata, $contentType) {
       $index = 0;
       $importHasErrors = false;
       $logVariationFields = "***************************** Content Import Begins ************************************\r\n";
+      $headerFields = [];
       while (($data = fgetcsv($handle)) !== FALSE) {
         //echo '<pre>'; print_r ($data);die;
         $index++;
         $errors = [];
         if ($index < 2) {
+          $data = format_header($data, $contentType);
           array_push($fieldNames, 'title');
           array_push($fieldTypes, 'text');
           array_push($fieldNames, 'langcode');
@@ -504,6 +518,11 @@ function create_node($filedata, $contentType) {
           // Header
           $headerFields = $data;
           continue;
+        } else {
+          $indexContentType = array_search('content_type', $headerFields);
+          if ($data[$indexContentType] != $contentType) {
+            continue;
+          }
         }
 
         // Log record
