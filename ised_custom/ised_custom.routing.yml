@@ -1,0 +1,5 @@
+ised_custom.settings:
+  defaults:
+    _form: '\Drupal\ised_custom\Form\CchSearchForm'
+  requirements:
+    _access: 'true'

@@ -1,0 +1,42 @@
+<?php
+
+/**
+ * @file
+ * Module file for ISED_Custom
+ */
+
+use Drupal\Core\Database\Query\AlterableInterface;
+
+/**
+ * Implements hook_query_TAG_alter()
+ */
+function ised_custom_query_search_node_search_alter(AlterableInterface $query) {
+  $language = \Drupal::languageManager()->getCurrentLanguage()->getId();
+  $op = \Drupal::request()->query->get('op');
+  $tidSector = $tidProvince = '';
+  if ($op != t('Clear')) {
+    $tidSector = \Drupal::request()->query->get('search_sector');
+    $tidProvince = \Drupal::request()->query->get('search_province');
+  }
+
+  // Filter results to current language only
+  $query->condition('n.langcode', $language, '=');
+
+  // Filter results by sector if specified
+  if ($tidSector) {
+    $query->join('node__field_sector', 'ts', 'n.nid = ts.entity_id');
+    $query->condition('ts.field_sector_target_id', $tidSector);
+  }
+
+  // Filter results by province if specified
+  if ($tidProvince) {
+    $query->join('node__field_province', 'tp', 'n.nid = tp.entity_id');
+    $query->condition('tp.field_province_target_id', $tidProvince);
+  }
+}
+
+/**
+ * Implements hook_theme().
+ */
+function ised_custom_theme($existing, $type, $theme, $path) {
+}
