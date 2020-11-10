@@ -5,6 +5,7 @@
  * Module file for Contentimport.
  */
 
+use Drupal\Component\Utility\Unicode;
 use Drupal\node\Entity\Node;
 use Drupal\file\Entity\File;
 use Drupal\taxonomy\Entity\Vocabulary;
@@ -60,7 +61,7 @@ function get_term_reference($voc, $terms) {
     if (empty($term_id)) {
       //$term_id = create_term($voc, $term, $vid);
       \Drupal::messenger()
-      ->addError(t('Term does not exist'));
+      ->addError(t('Term does not exist') . ": $term");
     }
     $termIds[]['target_id'] = $term_id;
   }
@@ -192,14 +193,32 @@ function get_user_info($userArray) {
  * @return array Matching node IDs
  */
 function get_matching_nodes($data) {
-  //print "<pre>";
-  //print_r($data);
-  //print "</pre>";
+  /*
+  print "<pre>";
+  print_r($sectors);
+  print_r($provinces);
+  print "</pre>";
+  */
   
   $query = \Drupal::entityQuery('node')
     ->condition('title', $data['title']['value'])
     ->condition('langcode', $data['langcode'])
     ->condition('type', $data['type']);
+  
+  // Get sectors and provinces into arrays
+  $sectors = $provinces = [];
+  if ( isset($data['field_sector']) ) {
+    foreach ($data['field_sector'] as $sector) {
+      $sectors[] = $sector['target_id'];
+    }
+    $query->condition($query->andConditionGroup()->condition('field_sector', $sectors));
+  }
+  if ( isset($data['field_province']) ) {
+    foreach ($data['field_province'] as $province) {
+      $provinces[] = $province['target_id'];
+    }
+    $query->condition($query->andConditionGroup()->condition('field_province', $provinces));
+  }
   
   // Add type-specific conditions
   if ($data['type'] == 'complaint_link') {
@@ -507,9 +526,14 @@ function create_node($filedata, $contentType) {
           foreach ($fieldNames as $fieldValues) {
             $i = 0;
             foreach ($data as $dataValues) {
+              //$dataValues = Unicode::convertToUtf8($dataValues, 'ascii');
+              //$fieldValues = Unicode::convertToUtf8($fieldValues, 'ascii');
               if ($fieldValues == $dataValues) {
+                //echo '*'.$fieldValues . '*|*' . $dataValues . '*<br>';
                 //$logVariationFields .= "Data Type : " . $fieldValues . "  Matches \n";
                 $keyIndex[$fieldValues] = $i;
+              } else if ($fieldValues == 'title') {
+                //printf('*%s: %s*|%s: %s<br>', $fieldValues, mb_detect_encoding($fieldValues), $dataValues, mb_detect_encoding($dataValues));
               }
               $i++;
             }
@@ -519,14 +543,17 @@ function create_node($filedata, $contentType) {
           $headerFields = $data;
           continue;
         } else {
+          // Log record
+          $logVariationFields .= sprintf("RECORD %s\r\n", $index-1);
+
+          // Check content type
           $indexContentType = array_search('content_type', $headerFields);
           if ($data[$indexContentType] != $contentType) {
+            $logVariationFields .= sprintf("- Content type is not %s\r\n", $contentType);
+            $logVariationFields .= "----------------------------------------\r\n";
             continue;
           }
         }
-
-        // Log record
-        $logVariationFields .= sprintf("RECORD %s\r\n", $index-1);
 
         if ( !isset($keyIndex['title']) ||
             ($contentType == 'info_link' && !isset($keyIndex['field_link_info'])) ||
@@ -773,10 +800,12 @@ function create_node($filedata, $contentType) {
 
         $matchingEn = get_matching_nodes($nodeArrayEn);
         $matchingFr = get_matching_nodes($nodeArrayFr);
-        //print "<pre>";
-        //print_r($nodeArrayEn);
-        //print_r($nodeArrayFr);
-        //die();
+        /*
+        print "<pre>";
+        print_r($nodeArrayEn);
+        print_r($nodeArrayFr);
+        die();
+        */
 
         if (count($matchingEn) > 1) {
           // Log error
@@ -791,7 +820,7 @@ function create_node($filedata, $contentType) {
           }
           $node->save();
           // Log
-          $logVariationFields .= "- English Updated successfully\r\n";
+          $logVariationFields .= sprintf("- English Updated successfully NID %s\r\n", $node->id());
 
           if ( $node->hasTranslation('fr') ) {
             $nodeFr = $node->getTranslation('fr');
@@ -801,14 +830,15 @@ function create_node($filedata, $contentType) {
             $nodeFr->save();
 
             // Log
-            $logVariationFields .= "- French Updated successfully\r\n";
+            $logVariationFields .= sprintf("- French Updated successfully NID %s\r\n", $nodeFr->id());
           } else if ($nodeArrayFr['title']['value'] != ''
               && (($contentType == 'complaint_link' && $nodeArrayFr['field_link_complaint'] != '') || ($contentType == 'info_link' && $nodeArrayFr['field_link_info'] != '')) ) {
             $nodeFr = $node->addTranslation('fr', $nodeArrayFr);
+            $nodeFr->title = $nodeArrayFr['title']['value'];
             $nodeFr->save();
 
             // Log
-            $logVariationFields .= "- French Imported successfully\r\n";
+            $logVariationFields .= sprintf("- French Imported successfully NID %s\r\n", $nodeFr->id());
           } else {
             // Log
             $logVariationFields .= "- French data not present\r\n";
@@ -817,22 +847,24 @@ function create_node($filedata, $contentType) {
           //fwrite($logFile, $logVariationFields);
         } else {
           $action = 'insert';
-          $nodeArrayEn['moderation_state'] = $nodeArrayFr['moderation_state'] = 'draft';
+          $nodeArrayEn['moderation_state'] = $nodeArrayFr['moderation_state'] = 'published';
           if ($nodeArrayEn['title']['value'] != ''
               && (($contentType == 'complaint_link' && $nodeArrayEn['field_link_complaint'] != '') || ($contentType == 'info_link' && $nodeArrayEn['field_link_info'] != '')) ) {
             $node = Node::create($nodeArrayEn);
+            $node->save();
 
             // Log
-            $logVariationFields .= "- English Imported successfully\r\n";
+            $logVariationFields .= sprintf("- English Imported successfully NID %s\r\n", $node->id());
 
             // If French data exists, add the translation
             if ($nodeArrayFr['title']['value'] != ''
                 && (($contentType == 'complaint_link' && $nodeArrayFr['field_link_complaint'] != '') || ($contentType == 'info_link' && $nodeArrayFr['field_link_info'] != '')) ) {
               $nodeFr = $node->addTranslation('fr', $nodeArrayFr);
+              $nodeFr->title = $nodeArrayFr['title']['value'];
               $nodeFr->save();
 
               // Log
-              $logVariationFields .= "- French Imported successfully\r\n";
+              $logVariationFields .= sprintf("- French Imported successfully NID %s\r\n", $nodeFr->id());
             } else {
               // Log
               $logVariationFields .= "- French data not present\r\n";
