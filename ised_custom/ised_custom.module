@@ -6,6 +6,7 @@
  */
 
 use Drupal\Core\Database\Query\AlterableInterface;
+use Drupal\Core\Url;
 
 /**
  * Implements hook_query_TAG_alter()
@@ -40,3 +41,38 @@ function ised_custom_query_search_node_search_alter(AlterableInterface $query) {
  */
 function ised_custom_theme($existing, $type, $theme, $path) {
 }
+
+/**
+ * Implements hook_system_breadcrumb_alter().
+ */
+function ised_custom_system_breadcrumb_alter(\Drupal\Core\Breadcrumb\Breadcrumb &$breadcrumb, \Drupal\Core\Routing\RouteMatchInterface $route_match, array $context) {
+
+  $route_name = \Drupal::routeMatch()->getRouteName();
+  $breadcrumb_links = $breadcrumb->getLinks();
+  $language = \Drupal::languageManager()->getCurrentLanguage()->getId();
+
+  if ($breadcrumb && !\Drupal::service('router.admin_context')->isAdminRoute()){
+
+    if($route_name=='view.sector_browse.page_2'){
+      $breadcrumb_links[0]->setText(t('Canada.ca'));
+      $url = Url::fromUri('https://www.canada.ca/'.$language.'.html');
+      $breadcrumb_links[0]->setUrl($url);
+  
+      $breadcrumb_links[1]->setText(t('Canadian Consumer Hub'));
+      $url2 = Url::fromRoute('<front>');
+      $breadcrumb_links[1]->setUrl($url2);
+      $breadcrumb->addLink(\Drupal\Core\Link::createFromRoute(t('Sector Results'), '<none>'));
+
+    }
+    else if($route_name=='view.sector_browse.page_1'){
+      $breadcrumb_links[0]->setText(t('Canada.ca'));
+      $url = Url::fromUri('https://www.canada.ca/'.$language.'.html');
+      $breadcrumb_links[0]->setUrl($url);
+  
+      $breadcrumb->addLink(\Drupal\Core\Link::createFromRoute(t('Canadian Consumer Hub'), '<front>'));
+      $breadcrumb->addLink(\Drupal\Core\Link::createFromRoute(t('Explore categories'), '<none>'));
+  
+    }
+  }
+
+  }
