@@ -48,6 +48,9 @@ class SubsectorBlock extends BlockBase{
         }
     }
     
+    // Clear block cache
+    \Drupal::service('page_cache_kill_switch')->trigger();
+
     $renderable = [
       '#theme' => 'sub_sector',
       '#termdata' => $term_detail,
