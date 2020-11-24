@@ -37,14 +37,7 @@ class CchSearchForm extends FormBase {
     $sectorTerms =\Drupal::entityTypeManager()->getStorage('taxonomy_term')->loadTree('sector');
     $sectorTermData = ['' => (string)t('Select a Sector')];
     foreach ($sectorTerms as $term) {
-      $spaces = (int)$term->depth * 2;
-      $space = '';
-      for ($i=0; $i<$spaces; $i++) {
-        $space .= '-';
-      }
-      $space = $space == '' ? '':$space.' ';
-      $name = str_pad($term->name, strlen($term->name)+$spaces, ' ', STR_PAD_LEFT);
-      $sectorTermData[$term->tid] = $space . $term->name;
+      $sectorTermData[$term->tid] = $term->name;
     }
 
     // Load provinces
@@ -62,6 +55,7 @@ class CchSearchForm extends FormBase {
     ];
     $form['search_sector'] = [
       '#options' => $sectorTermData,
+      '#title' => $this->t('Filter options'),  
       '#type' => 'select',
       '#value' => $sector,
     ];

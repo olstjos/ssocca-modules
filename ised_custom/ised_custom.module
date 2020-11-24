@@ -40,6 +40,11 @@ function ised_custom_query_search_node_search_alter(AlterableInterface $query) {
  * Implements hook_theme().
  */
 function ised_custom_theme($existing, $type, $theme, $path) {
+  return [
+    'sub_sector' => [
+      'variables' => ['termdata' => NULL, 'language' => NULL],
+    ],
+  ];
 }
 
 /**
@@ -61,8 +66,19 @@ function ised_custom_system_breadcrumb_alter(\Drupal\Core\Breadcrumb\Breadcrumb 
       $breadcrumb_links[1]->setText(t('Canadian Consumer Hub'));
       $url2 = Url::fromRoute('<front>');
       $breadcrumb_links[1]->setUrl($url2);
-      $breadcrumb->addLink(\Drupal\Core\Link::createFromRoute(t('Sector Results'), '<none>'));
+      $breadcrumb->addLink(\Drupal\Core\Link::createFromRoute(t('Results'), '<none>'));
 
+    }
+    else if($route_name=='search.view_node_search'){
+      $breadcrumb_links[0]->setText(t('Canada.ca'));
+      $url = Url::fromUri('https://www.canada.ca/'.$language.'.html');
+      $breadcrumb_links[0]->setUrl($url);
+  
+      $breadcrumb_links[1]->setText(t('Canadian Consumer Hub'));
+      $url2 = Url::fromRoute('<front>');
+      $breadcrumb_links[1]->setUrl($url2);
+     
+      
     }
     else if($route_name=='view.sector_browse.page_1'){
       $breadcrumb_links[0]->setText(t('Canada.ca'));

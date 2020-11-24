@@ -96,7 +96,7 @@ class SectorSearchBlock extends BlockBase implements ContainerFactoryPluginInter
   </h3>
   <ul class="list-inline menu small" role="menubar">
     <li class="text-center">
-      <a href="010-ssocca-02-01-en.html"
+      <a href="/'.$language.'/sector/term/34"
         class="item"
         tabindex="0"
         aria-posinset="1"
@@ -122,7 +122,7 @@ class SectorSearchBlock extends BlockBase implements ContainerFactoryPluginInter
       </a>
     </li>
     <li class="text-center">
-      <a href="010-ssocca-04-01-en.html"
+      <a href="/'.$language.'/sector/term/115"
         class="item"
         tabindex="-1"
         aria-posinset="3"
