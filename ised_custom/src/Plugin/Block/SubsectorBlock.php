@@ -55,6 +55,10 @@ class SubsectorBlock extends BlockBase{
       '#theme' => 'sub_sector',
       '#termdata' => $term_detail,
       '#language' => $language,
+      '#cache' => [
+        'max-age' => 0,
+        'tags' => ['subsector-block'.$tid],
+      ]
     ];
 
     return $renderable;
