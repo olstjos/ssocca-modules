@@ -95,13 +95,15 @@ class SectorSearchBlock extends BlockBase implements ContainerFactoryPluginInter
     $term_id=[];
     $term_name=[];
     $image_path=[];
-   foreach ($tree as $term) {
-       if($term->field_image_sector){
-         $image_path[]=file_create_url($term->field_image_sector->entity->getFileUri());
-       }    
-     $term_name[] = $term->getName();
-     $term_id[]=$term->id();
-   }
+    foreach ($tree as $term) {
+      if($term->field_image_sector && $term->field_image_sector->entity){
+        $image_path[] = file_create_url($term->field_image_sector->entity->getFileUri());
+      } else if ($term->field_image_sector) {
+        $image_path[] = '';
+      }
+      $term_name[] = $term->getName();
+      $term_id[] = $term->id();
+    }
  
    $sectorHtml = '<h3 class="wb-inv">
    Explore categories
