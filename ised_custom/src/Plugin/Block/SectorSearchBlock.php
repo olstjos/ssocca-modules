@@ -91,50 +91,63 @@ class SectorSearchBlock extends BlockBase implements ContainerFactoryPluginInter
     $theme = \Drupal::theme()->getActiveTheme();
     $themePath = $base_url.'/'. $theme->getPath();
 
-    $sectorHtml = '<h3 class="wb-inv">
-    Explore categories
-  </h3>
-  <ul class="list-inline menu small" role="menubar">
-    <li class="text-center">
-      <a href="/'.$language.'/sector/term/34"
-        class="item"
-        tabindex="0"
-        aria-posinset="1"
-        aria-setsize="3"
-        role="menuitem">
-        <img src="'.$themePath.'/images/001-trans-01b1.png"
-          class="img-thumbnail mrgn-bttm-sm"
-          alt="" /><br />
-        Transportation
-      </a>
-    </li>
-    <li class="text-center">
-      <a href="/'.$language.'/sector/term/1"
-        class="item"
-        tabindex="-1"
-        aria-posinset="2"
-        aria-setsize="3"
-        role="menuitem">
-        <img src="'.$themePath.'/images/001-financial-01t1.png"
-          class="img-thumbnail mrgn-bttm-sm"
-          alt="" /><br />
-        Financial services
-      </a>
-    </li>
-    <li class="text-center">
-      <a href="/'.$language.'/sector/term/115"
-        class="item"
-        tabindex="-1"
-        aria-posinset="3"
-        aria-setsize="3"
-        role="menuitem">
-        <img src="'.$themePath.'/images/001-telecommunications-01t1.png"
-          class="img-thumbnail mrgn-bttm-sm"
-          alt="" /><br />
-        Telecommunications
-      </a>
-    </li>
-  </ul>';
+    $tree = \Drupal::entityTypeManager()->getStorage('taxonomy_term')->loadTree('sector',0,1,TRUE);
+    $term_id=[];
+    $term_name=[];
+    $image_path=[];
+   foreach ($tree as $term) {
+       if($term->field_image_sector){
+         $image_path[]=file_create_url($term->field_image_sector->entity->getFileUri());
+       }    
+     $term_name[] = $term->getName();
+     $term_id[]=$term->id();
+   }
+ 
+   $sectorHtml = '<h3 class="wb-inv">
+   Explore categories
+ </h3>
+ <ul class="list-inline menu small" role="menubar">
+   <li class="text-center">
+     <a href="/'.$language.'/sector/term/'.$term_id[0].'"
+       class="item"
+       tabindex="0"
+       aria-posinset="1"
+       aria-setsize="3"
+       role="menuitem">
+       <img src="'.$image_path[0].'"
+         class="img-thumbnail mrgn-bttm-sm img-thumbnail-custom"
+         alt="" /><br />
+       '.$term_name[0].'
+     </a>
+   </li>
+   <li class="text-center">
+     <a href="/'.$language.'/sector/term/'.$term_id[1].'"
+       class="item"
+       tabindex="-1"
+       aria-posinset="2"
+       aria-setsize="3"
+       role="menuitem">
+       <img src="'.$image_path[1].'"
+         class="img-thumbnail mrgn-bttm-sm img-thumbnail-custom"
+         alt="" /><br />
+       '.$term_name[1].'
+     </a>
+   </li>
+   <li class="text-center">
+     <a href="/'.$language.'/sector/term/'.$term_id[2].'"
+       class="item"
+       tabindex="-1"
+       aria-posinset="3"
+       aria-setsize="3"
+       role="menuitem">
+       <img src="'.$image_path[2].'"
+         class="img-thumbnail mrgn-bttm-sm img-thumbnail-custom"
+         alt="" /><br />
+       '.$term_name[2].'
+     </a>
+   </li>
+ </ul>';
+  
 
     $build = [];
     $build['block-container'] = [
@@ -160,18 +173,6 @@ class SectorSearchBlock extends BlockBase implements ContainerFactoryPluginInter
     $formContainer['form'] = $form;
     $build['block-container']['inner']['sector-container'] = $sectorContainer;
     $build['block-container']['inner']['form-container'] = $formContainer;
-    /*
-
-    $build['heading'] = [
-      '#type' => 'markup',
-      '#markup' => '<div class="container col-md-6">Search here</div>',
-    ];
-    $build['form-container'] = [
-      '#type' => 'container',
-      '#attributes' => ['class' => ['container','col-md-6']],
-    ];
-    $build['form-container']['form'] = $form;
-    */
     
     return $build;
   }
