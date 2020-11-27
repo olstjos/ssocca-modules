@@ -20,7 +20,8 @@ use Symfony\Component\DependencyInjection\ContainerInterface;
  *   admin_label = @Translation("Sector Search Block"),
  * )
  */
-class SectorSearchBlock extends BlockBase implements ContainerFactoryPluginInterface {
+class SectorSearchBlock extends BlockBase implements ContainerFactoryPluginInterface
+{
 
   /**
    * The form builder.
@@ -83,73 +84,52 @@ class SectorSearchBlock extends BlockBase implements ContainerFactoryPluginInter
   /**
    * {@inheritDoc}
    */
-  public function build() {
+  public function build()
+  {
     $language = \Drupal::languageManager()->getCurrentLanguage()->getId();
     $form = \Drupal::formBuilder()->getForm('Drupal\wxt_library\Form\SearchBlockForm');
 
     global $base_url;
     $theme = \Drupal::theme()->getActiveTheme();
-    $themePath = $base_url.'/'. $theme->getPath();
+    $themePath = $base_url . '/' . $theme->getPath();
 
-    $tree = \Drupal::entityTypeManager()->getStorage('taxonomy_term')->loadTree('sector',0,1,TRUE);
-    $term_id=[];
-    $term_name=[];
-    $image_path=[];
+    $tree = \Drupal::entityTypeManager()->getStorage('taxonomy_term')->loadTree('sector', 0, 1, TRUE);
+
+    $sectors = [];
+    $markup = [];
+    $image_path = '';
     foreach ($tree as $term) {
-      if($term->field_image_sector && $term->field_image_sector->entity){
-        $image_path[] = file_create_url($term->field_image_sector->entity->getFileUri());
+      if ($term->field_image_sector && $term->field_image_sector->entity) {
+        $image_path = file_create_url($term->field_image_sector->entity->getFileUri());
       } else if ($term->field_image_sector) {
-        $image_path[] = '';
+        $image_path = '';
       }
-      $term_name[] = $term->getName();
-      $term_id[] = $term->id();
+      $sectors[] = ['id' => $term->id(), 'name' => $term->getName(), 'img_path' => $image_path];
     }
- 
-   $sectorHtml = '<h3 class="wb-inv">
-   Explore categories
- </h3>
- <ul class="list-inline menu small" role="menubar">
-   <li class="text-center">
-     <a href="/'.$language.'/sector/term/'.$term_id[0].'"
-       class="item"
-       tabindex="0"
-       aria-posinset="1"
-       aria-setsize="3"
-       role="menuitem">
-       <img src="'.$image_path[0].'"
-         class="img-thumbnail mrgn-bttm-sm img-thumbnail-custom"
-         alt="" /><br />
-       '.$term_name[0].'
-     </a>
-   </li>
-   <li class="text-center">
-     <a href="/'.$language.'/sector/term/'.$term_id[1].'"
-       class="item"
-       tabindex="-1"
-       aria-posinset="2"
-       aria-setsize="3"
-       role="menuitem">
-       <img src="'.$image_path[1].'"
-         class="img-thumbnail mrgn-bttm-sm img-thumbnail-custom"
-         alt="" /><br />
-       '.$term_name[1].'
-     </a>
-   </li>
-   <li class="text-center">
-     <a href="/'.$language.'/sector/term/'.$term_id[2].'"
-       class="item"
-       tabindex="-1"
-       aria-posinset="3"
-       aria-setsize="3"
-       role="menuitem">
-       <img src="'.$image_path[2].'"
-         class="img-thumbnail mrgn-bttm-sm img-thumbnail-custom"
-         alt="" /><br />
-       '.$term_name[2].'
-     </a>
-   </li>
- </ul>';
-  
+
+    foreach ($sectors as $sector) {
+      $markup[] = '<li class="text-center">
+    <a href="/' . $language . '/sector/term/' . $sector['id'] . '"
+      class="item"
+      tabindex="0"
+      aria-posinset="1"
+      aria-setsize="3"
+      role="menuitem">
+      <img src="' . $sector['img_path'] . '"
+        class="img-thumbnail mrgn-bttm-sm img-thumbnail-custom"
+        alt="" /><br />
+      ' . $sector['name'] . '
+    </a>
+  </li>';
+    }
+
+    $mark = implode('', $markup);
+    $sectorHtml = '<h3 class="wb-inv">
+  Explore categories
+</h3>
+<ul class="list-inline menu small" role="menubar">' . $mark . '</ul>';
+
+
 
     $build = [];
     $build['block-container'] = [
@@ -175,21 +155,23 @@ class SectorSearchBlock extends BlockBase implements ContainerFactoryPluginInter
     $formContainer['form'] = $form;
     $build['block-container']['inner']['sector-container'] = $sectorContainer;
     $build['block-container']['inner']['form-container'] = $formContainer;
-    
+
     return $build;
   }
 
   /**
    * {@inheritdoc}
    */
-  protected function blockAccess(AccountInterface $account) {
+  protected function blockAccess(AccountInterface $account)
+  {
     return AccessResult::allowedIfHasPermission($account, 'access content');
   }
 
   /**
    * {@inheritdoc}
    */
-  public function blockForm($form, FormStateInterface $form_state) {
+  public function blockForm($form, FormStateInterface $form_state)
+  {
     $config = $this->getConfiguration();
 
     return $form;
@@ -198,7 +180,8 @@ class SectorSearchBlock extends BlockBase implements ContainerFactoryPluginInter
   /**
    * {@inheritdoc}
    */
-  public function blockSubmit($form, FormStateInterface $form_state) {
+  public function blockSubmit($form, FormStateInterface $form_state)
+  {
     $this->configuration['sector_search_block_settings'] = $form_state->getValue('sector_search_block_settings');
   }
 }
