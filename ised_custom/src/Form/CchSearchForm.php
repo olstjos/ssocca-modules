@@ -33,19 +33,37 @@ class CchSearchForm extends FormBase {
     $sector = $op == t('Clear') ? '':\Drupal::request()->query->get('search_sector');
     $province = $op == t('Clear') ? '':\Drupal::request()->query->get('search_province');
 
-    // Load sectors
-    $sectorTerms =\Drupal::entityTypeManager()->getStorage('taxonomy_term')->loadTree('sector');
-    $sectorTermData = ['' => (string)t('Select a Sector')];
-    foreach ($sectorTerms as $term) {
-      $sectorTermData[$term->tid] = $term->name;
+    $sector_tid = \Drupal::request()->query->get('search_sector');
+    $province_tid = \Drupal::request()->query->get('search_province');
+    
+    if($sector_tid){
+      $term = \Drupal\taxonomy\Entity\Term::load($sector_tid); 
+     $sectorTermData[$term->id()] = $term->label();
+    }
+    else{
+      // Load sectors
+      $sectorTerms =\Drupal::entityTypeManager()->getStorage('taxonomy_term')->loadTree('sector');
+      $sectorTermData = ['' => (string)t('Select a Sector')];
+      foreach ($sectorTerms as $term) {
+        $sectorTermData[$term->tid] = $term->name;
+      }
+    
     }
 
-    // Load provinces
-    $provinceTerms =\Drupal::entityTypeManager()->getStorage('taxonomy_term')->loadTree('province');
-    $provinceTermData = ['' => (string)t('Select a Province')];
-    foreach ($provinceTerms as $term) {
-      $provinceTermData[$term->tid] = $term->name;
+    if($province_tid){
+      $term = \Drupal\taxonomy\Entity\Term::load($province_tid); 
+      $provinceTermData[$term->id()] = $term->label();
+
     }
+    else{
+      // Load provinces
+      $provinceTerms =\Drupal::entityTypeManager()->getStorage('taxonomy_term')->loadTree('province');
+      $provinceTermData = ['' => (string)t('Select a Province')];
+      foreach ($provinceTerms as $term) {
+        $provinceTermData[$term->tid] = $term->name;
+      }
+    }
+  
 
     $form['keys'] = [
       '#type' => 'hidden',
