@@ -15,7 +15,8 @@ use Drupal\user\Entity\User;
 /**
  * Implements hook_preprocess_page().
  */
-function contentimport_preprocess_page(&$variables) {
+function contentimport_preprocess_page(&$variables)
+{
   $variables['page']['#cache']['contexts'][] = 'route';
   $urlRoute = \Drupal::routeMatch()->getRouteName();
   if (($urlRoute == 'contentimport.admin_settings')) {
@@ -26,7 +27,8 @@ function contentimport_preprocess_page(&$variables) {
 /**
  * To get all Content Type Fields.
  */
-function get_fields($contentType) {
+function get_fields($contentType)
+{
   $fields = [];
   foreach (\Drupal::service('entity_field.manager')
     ->getFieldDefinitions('node', $contentType) as $field_definition) {
@@ -42,17 +44,17 @@ function get_fields($contentType) {
 /**
  * To get Reference field ids.
  */
-function get_term_reference($voc, $terms) {
+function get_term_reference($voc, $terms)
+{
   //print "|$terms|<br >";
   $vocName = strtolower($voc);
   $vid = preg_replace('@[^a-z0-9_]+@', '_', $vocName);
   $vocabularies = Vocabulary::loadMultiple();
-  
-  if (!isset($vocabularies[$vid])) {
-   // create_voc($vid, $voc);
-   \Drupal::messenger()
-   ->addError(t('Vocabulary not exists please add the vocabulary and import again'));
 
+  if (!isset($vocabularies[$vid])) {
+    // create_voc($vid, $voc);
+    \Drupal::messenger()
+      ->addError(t('Vocabulary not exists please add the vocabulary and import again'));
   }
   $termArray = array_map('trim', explode(',', $terms));
   $termIds = [];
@@ -61,7 +63,7 @@ function get_term_reference($voc, $terms) {
     if (empty($term_id)) {
       //$term_id = create_term($voc, $term, $vid);
       \Drupal::messenger()
-      ->addError(t('Term does not exist') . ": $term");
+        ->addError(t('Term does not exist') . ": $term");
     }
     $termIds[]['target_id'] = $term_id;
   }
@@ -71,28 +73,30 @@ function get_term_reference($voc, $terms) {
 /**
  * To Create Terms if it is not available.
  */
-function create_voc($vid, $voc) {
+function create_voc($vid, $voc)
+{
   $vocabulary = Vocabulary::create(
-        [
-          'vid' => $vid,
-          'machine_name' => $vid,
-          'name' => $voc,
-        ]
-    );
+    [
+      'vid' => $vid,
+      'machine_name' => $vid,
+      'name' => $voc,
+    ]
+  );
   $vocabulary->save();
 }
 
 /**
  * To Create Terms if it is not available.
  */
-function create_term($voc, $term, $vid) {
+function create_term($voc, $term, $vid)
+{
   Term::create(
-        [
-          'parent' => [$voc],
-          'name' => $term,
-          'vid' => $vid,
-        ]
-    )->save();
+    [
+      'parent' => [$voc],
+      'name' => $term,
+      'vid' => $vid,
+    ]
+  )->save();
   $termId = get_term_id($term, $vid);
   return $termId;
 }
@@ -100,7 +104,8 @@ function create_term($voc, $term, $vid) {
 /**
  * To get Termid available.
  */
-function get_term_id($term, $vid) {
+function get_term_id($term, $vid)
+{
   $query = \Drupal::database()->select('taxonomy_term_field_data', 't');
   $query->fields('t', ['tid']);
   $query->condition('t.vid', $vid);
@@ -115,7 +120,8 @@ function get_term_id($term, $vid) {
 /**
  * To get node available.
  */
-function get_node_id($title) {
+function get_node_id($title)
+{
   $nodeReference = [];
   $db = \Drupal::database();
   foreach ($title as $key => $value) {
@@ -133,7 +139,8 @@ function get_node_id($title) {
 /**
  * To get user id.
  */
-function get_user_id($name) {
+function get_user_id($name)
+{
   $user_id = \Drupal::database()
     ->select('users_field_data', 'u')
     ->fields('u', ['uid'])
@@ -146,30 +153,29 @@ function get_user_id($name) {
 /**
  * To get user information based on emailIds.
  */
-function get_user_info($userArray) {
+function get_user_info($userArray)
+{
   $uids = [];
   foreach ($userArray as $usermail) {
     if (filter_var($usermail, FILTER_VALIDATE_EMAIL)) {
       $users = \Drupal::entityTypeManager()->getStorage('user')
         ->loadByProperties(
-                [
-                  'mail' => $usermail,
-                ]
-            );
-    }
-    else {
+          [
+            'mail' => $usermail,
+          ]
+        );
+    } else {
       $users = \Drupal::entityTypeManager()->getStorage('user')
         ->loadByProperties(
-                [
-                  'name' => $usermail,
-                ]
-            );
+          [
+            'name' => $usermail,
+          ]
+        );
     }
     $user = reset($users);
     if ($user) {
       $uids[] = $user->id();
-    }
-    else {
+    } else {
       $user = User::create();
       $user->uid = '';
       $user->setUsername($usermail);
@@ -192,34 +198,35 @@ function get_user_info($userArray) {
  * @param array $data Node data
  * @return array Matching node IDs
  */
-function get_matching_nodes($data) {
+function get_matching_nodes($data)
+{
   /*
   print "<pre>";
   print_r($sectors);
   print_r($provinces);
   print "</pre>";
   */
-  
+
   $query = \Drupal::entityQuery('node')
     ->condition('title', $data['title']['value'])
     ->condition('langcode', $data['langcode'])
     ->condition('type', $data['type']);
-  
+
   // Get sectors and provinces into arrays
   $sectors = $provinces = [];
-  if ( isset($data['field_sector']) ) {
+  if (isset($data['field_sector'])) {
     foreach ($data['field_sector'] as $sector) {
       $sectors[] = $sector['target_id'];
     }
     $query->condition($query->andConditionGroup()->condition('field_sector', $sectors));
   }
-  if ( isset($data['field_province']) ) {
+  if (isset($data['field_province'])) {
     foreach ($data['field_province'] as $province) {
       $provinces[] = $province['target_id'];
     }
     $query->condition($query->andConditionGroup()->condition('field_province', $provinces));
   }
-  
+
   // Add type-specific conditions
   if ($data['type'] == 'complaint_link') {
     $query->condition('field_link_complaint', $data['field_link_complaint']);
@@ -242,7 +249,8 @@ function get_matching_nodes($data) {
  * @param string $contentType Node content type
  * @return array Updated node data
  */
-function process_field($data, $keyIndex, $fieldSettings, $fieldType, $fieldName, $contentType) {
+function process_field($data, $keyIndex, $fieldSettings, $fieldType, $fieldName, $contentType)
+{
   switch ($fieldType) {
     case 'image':
       $logVariationFields .= "Importing Image (" . trim($data[$keyIndex[$fieldName]]) . ") :: ";
@@ -291,13 +299,11 @@ function process_field($data, $keyIndex, $fieldSettings, $fieldType, $fieldName,
         } else {
           // Log an error
         }
-      }
-      elseif ($fieldSettings['target_type'] == 'user') {
+      } elseif ($fieldSettings['target_type'] == 'user') {
         $userArray = explode(', ', $data[$keyIndex[$fieldName]]);
         $users = get_user_info($userArray);
         $nodeArrayEn[$fieldName] = $users;
-      }
-      elseif ($fieldSettings['target_type'] == 'node') {
+      } elseif ($fieldSettings['target_type'] == 'node') {
         $nodeArrayEns = explode(':', $data[$keyIndex[$fieldName]]);
         $nodeReference1 = get_node_id($nodeArrayEns);
         $nodeArrayEn[$fieldName] = $nodeReference1;
@@ -333,8 +339,7 @@ function process_field($data, $keyIndex, $fieldSettings, $fieldType, $fieldName,
       if (count($dateArray) > 1) {
         $dateTimeStamp = strtotime($data[$keyIndex[$fieldName]]);
         $newDateString = date('Y-m-d\TH:i:s', $dateTimeStamp);
-      }
-      else {
+      } else {
         $dateTimeStamp = strtotime($data[$keyIndex[$fieldName]]);
         $newDateString = date('Y-m-d', $dateTimeStamp);
       }
@@ -350,7 +355,7 @@ function process_field($data, $keyIndex, $fieldSettings, $fieldType, $fieldName,
 
     case 'boolean':
       //$logVariationFields .= "Importing Boolean (" . $fieldName . ") :: ";
-      $affirmative = ['On','on','Yes','yes',1,'Oui','oui'];
+      $affirmative = ['On', 'on', 'Yes', 'yes', 1, 'Oui', 'oui'];
       $nodeArrayEn[$fieldName] = in_array($data[$keyIndex[$fieldName]], $affirmative);
       //$logVariationFields .= " Success \n";
       break;
@@ -372,15 +377,15 @@ function process_field($data, $keyIndex, $fieldSettings, $fieldType, $fieldName,
             $latlng[$l] = floatval(preg_replace("/\[^0-9,.]/", "", $latlng[$l]));
           }
           array_push(
-                $geoMultiArray, [
-                  'lat' => $latlng[0],
-                  'lng' => $latlng[1],
-                ]
-            );
+            $geoMultiArray,
+            [
+              'lat' => $latlng[0],
+              'lng' => $latlng[1],
+            ]
+          );
         }
         $nodeArrayEn[$fieldName] = $geoMultiArray;
-      }
-      else {
+      } else {
         $latlng = explode(",", $data[$keyIndex[$fieldName]]);
         for ($l = 0; $l < count($latlng); $l++) {
           $latlng[$l] = floatval(preg_replace("/\[^0-9,.]/", "", $latlng[$l]));
@@ -413,12 +418,13 @@ function process_field($data, $keyIndex, $fieldSettings, $fieldType, $fieldName,
             for ($l = 0; $l < count($latlng); $l++) {
               $latlng[$l] = floatval($latlng[$l]);
             }
-            array_push($geoFieldMultiArray,
-            \Drupal::service('geofield.wkt_generator')->WktBuildPoint([trim($latlng[1]), trim($latlng[0])]));
+            array_push(
+              $geoFieldMultiArray,
+              \Drupal::service('geofield.wkt_generator')->WktBuildPoint([trim($latlng[1]), trim($latlng[0])])
+            );
           }
           $nodeArrayEn[$fieldName] = $geoFieldMultiArray;
-        }
-        else {
+        } else {
           $latlng = explode(",", trim($data[$keyIndex[$fieldName]]));
           for ($l = 0; $l < count($latlng); $l++) {
             $latlng[$l] = floatval($latlng[$l]);
@@ -441,7 +447,6 @@ function process_field($data, $keyIndex, $fieldSettings, $fieldType, $fieldName,
       $nodeArrayEn[$fieldName] = $data[$keyIndex[$fieldName]];
       break;
   }
-
 }
 
 /**
@@ -450,17 +455,18 @@ function process_field($data, $keyIndex, $fieldSettings, $fieldType, $fieldName,
  * @param array $data Node data
  * @return array Errors
  */
-function get_record_errors($data) {
+function get_record_errors($data)
+{
   $errors = [];
   if ($data['type'] == 'complaint_link') {
-    if ( !isset($data['field_sector']) || empty($data['field_sector']) ) {
+    if (!isset($data['field_sector']) || empty($data['field_sector'])) {
       $errors[] = t('Missing Sector');
     }
     if ($data['field_link_complaint'] == '') {
       $errors[] = t('Missing Complaint link');
     }
   } else if ($data['type'] == 'info_link') {
-    if ( !isset($data['field_sector']) || empty($data['field_sector']) ) {
+    if (!isset($data['field_sector']) || empty($data['field_sector'])) {
       $errors[] = t('Missing Sector');
     }
     if ($data['field_link_info'] == '') {
@@ -471,11 +477,12 @@ function get_record_errors($data) {
   return $errors;
 }
 
-function format_header($header, $contentType) {
+function format_header($header, $contentType)
+{
   foreach ($header as $key => $columnName) {
-    if ( $contentType == 'complaint_link' && in_array($columnName, ['field_link','field_link_fr']) ) {
+    if ($contentType == 'complaint_link' && in_array($columnName, ['field_link', 'field_link_fr'])) {
       $header[$key] = str_replace('field_link', 'field_link_complaint', $columnName);
-    } elseif ( $contentType == 'info_link' && in_array($columnName, ['field_link','field_link_fr']) ) {
+    } elseif ($contentType == 'info_link' && in_array($columnName, ['field_link', 'field_link_fr'])) {
       $header[$key] = str_replace('field_link', 'field_link_info', $columnName);
     }
   }
@@ -486,45 +493,27 @@ function format_header($header, $contentType) {
 /**
  * Implements hook_cron().
  */
-function contentimport_cron() {  
-  /*$files = \Drupal::entityTypeManager()
-  ->getStorage('file')
-  ->loadByProperties(['uri' => 'public://import.csv']);
-  $file = reset($files);*/
- /*
-
-  $files_il = \Drupal::entityTypeManager()
-  ->getStorage('file')
-  ->loadByProperties(['uri' => 'public://info_link.csv']);
-  $file_il=reset($files_il);*/
-
-//  if($file_cl){
-
-    create_node('public://import.csv','complaint_link');
-  //}
- // else if($file_il){
-
-    create_node('public://import.csv','info_link');
- // }  
-  
+function contentimport_cron()
+{
+  create_node('public://import.csv', 'complaint_link');
+  create_node('public://import.csv', 'info_link');
 }
 
 /**
  * To import data as Content type nodes.
  */
-function create_node($location, $contentType) {
-
+function create_node($location, $contentType)
+{
   drupal_flush_all_caches();
   global $base_url;
 
   $files = \Drupal::entityTypeManager()
-  ->getStorage('file')
-  ->loadByProperties(['uri' => $location]);
-  $file=reset($files);
-  $fid=$file->fid->value;
+    ->getStorage('file')
+    ->loadByProperties(['uri' => $location]);
+  $file = reset($files);
+  $fid = $file->fid->value;
 
   $request_time = \Drupal::time()->getCurrentTime();
-
   $logFileName = "contentimportlog.txt";
   $logFile = fopen("sites/default/files/" . $logFileName, "w") or die("There is no permission to create log file. Please give permission for sites/default/file!");
   $fields = get_fields($contentType);
@@ -534,8 +523,6 @@ function create_node($location, $contentType) {
   // Code for import csv file.
   $mimetype = 1;
   if ($mimetype) {
-  //  $location ='sites/default/files/cch_import_template_test_0.csv' ;
-    //echo $location;exit;
     if (($handle = fopen($location, "r")) !== FALSE) {
       $keyIndex = [];
       $index = 0;
@@ -580,7 +567,7 @@ function create_node($location, $contentType) {
           continue;
         } else {
           // Log record
-          $logVariationFields .= sprintf("RECORD %s\r\n", $index-1);
+          $logVariationFields .= sprintf("RECORD %s\r\n", $index - 1);
 
           // Check content type
           $indexContentType = array_search('content_type', $headerFields);
@@ -591,9 +578,11 @@ function create_node($location, $contentType) {
           }
         }
 
-        if ( !isset($keyIndex['title']) ||
-            ($contentType == 'info_link' && !isset($keyIndex['field_link_info'])) ||
-            ($contentType == 'complaint_link' && !isset($keyIndex['field_link_complaint'])) ) {
+        if (
+          !isset($keyIndex['title']) ||
+          ($contentType == 'info_link' && !isset($keyIndex['field_link_info'])) ||
+          ($contentType == 'complaint_link' && !isset($keyIndex['field_link_complaint']))
+        ) {
           \Drupal::messenger()
             ->addError(t('Title and/or link is missing in CSV file. Please add these fields and import again'));
           $url = $base_url . "/admin/config/system/cron";
@@ -652,13 +641,11 @@ function create_node($location, $contentType) {
                 if (!empty($terms)) {
                   $nodeArrayEn[$fieldNames[$f]] = $terms;
                 }
-              }
-              elseif ($fieldSettings[$f]['target_type'] == 'user') {
+              } elseif ($fieldSettings[$f]['target_type'] == 'user') {
                 $userArray = explode(', ', $data[$keyIndex[$fieldNames[$f]]]);
                 $users = get_user_info($userArray);
                 $nodeArrayEn[$fieldNames[$f]] = $users;
-              }
-              elseif ($fieldSettings[$f]['target_type'] == 'node') {
+              } elseif ($fieldSettings[$f]['target_type'] == 'node') {
                 $nodeArrayEns = explode(':', $data[$keyIndex[$fieldNames[$f]]]);
                 $nodeReference1 = get_node_id($nodeArrayEns);
                 $nodeArrayEn[$fieldNames[$f]] = $nodeReference1;
@@ -694,8 +681,7 @@ function create_node($location, $contentType) {
               if (count($dateArray) > 1) {
                 $dateTimeStamp = strtotime($data[$keyIndex[$fieldNames[$f]]]);
                 $newDateString = date('Y-m-d\TH:i:s', $dateTimeStamp);
-              }
-              else {
+              } else {
                 $dateTimeStamp = strtotime($data[$keyIndex[$fieldNames[$f]]]);
                 $newDateString = date('Y-m-d', $dateTimeStamp);
               }
@@ -711,7 +697,7 @@ function create_node($location, $contentType) {
 
             case 'boolean':
               //$logVariationFields .= "Importing Boolean (" . $fieldNames[$f] . ") :: ";
-              $affirmative = ['On','on','Yes','yes',1,'Oui','oui'];
+              $affirmative = ['On', 'on', 'Yes', 'yes', 1, 'Oui', 'oui'];
               $nodeArrayEn[$fieldNames[$f]] = in_array($data[$keyIndex[$fieldNames[$f]]], $affirmative);/*  (
                 $data[$keyIndex[$fieldNames[$f]]] == 'On' ||
                 $data[$keyIndex[$fieldNames[$f]]] == 'Yes' ||
@@ -738,15 +724,15 @@ function create_node($location, $contentType) {
                     $latlng[$l] = floatval(preg_replace("/\[^0-9,.]/", "", $latlng[$l]));
                   }
                   array_push(
-                        $geoMultiArray, [
-                          'lat' => $latlng[0],
-                          'lng' => $latlng[1],
-                        ]
-                    );
+                    $geoMultiArray,
+                    [
+                      'lat' => $latlng[0],
+                      'lng' => $latlng[1],
+                    ]
+                  );
                 }
                 $nodeArrayEn[$fieldNames[$f]] = $geoMultiArray;
-              }
-              else {
+              } else {
                 $latlng = explode(",", $data[$keyIndex[$fieldNames[$f]]]);
                 for ($l = 0; $l < count($latlng); $l++) {
                   $latlng[$l] = floatval(preg_replace("/\[^0-9,.]/", "", $latlng[$l]));
@@ -779,12 +765,13 @@ function create_node($location, $contentType) {
                     for ($l = 0; $l < count($latlng); $l++) {
                       $latlng[$l] = floatval($latlng[$l]);
                     }
-                    array_push($geoFieldMultiArray,
-                    \Drupal::service('geofield.wkt_generator')->WktBuildPoint([trim($latlng[1]), trim($latlng[0])]));
+                    array_push(
+                      $geoFieldMultiArray,
+                      \Drupal::service('geofield.wkt_generator')->WktBuildPoint([trim($latlng[1]), trim($latlng[0])])
+                    );
                   }
                   $nodeArrayEn[$fieldNames[$f]] = $geoFieldMultiArray;
-                }
-                else {
+                } else {
                   $latlng = explode(",", trim($data[$keyIndex[$fieldNames[$f]]]));
                   for ($l = 0; $l < count($latlng); $l++) {
                     $latlng[$l] = floatval($latlng[$l]);
@@ -826,10 +813,10 @@ function create_node($location, $contentType) {
         $nodeArrayFr = $nodeArrayEn;
         $nodeArrayFr['langcode'] = 'fr';
         foreach ($fieldNames as $fieldName) {
-          $headerIndex = array_search($fieldName.'_fr', $headerFields);
-          if ( $headerIndex !== false && $fieldName == 'title' ) {
+          $headerIndex = array_search($fieldName . '_fr', $headerFields);
+          if ($headerIndex !== false && $fieldName == 'title') {
             $nodeArrayFr[$fieldName]['value'] = $data[$headerIndex];
-          } else if ( $headerIndex !== false ) {
+          } else if ($headerIndex !== false) {
             $nodeArrayFr[$fieldName] = $data[$headerIndex];
           }
         }
@@ -858,7 +845,7 @@ function create_node($location, $contentType) {
           // Log
           $logVariationFields .= sprintf("- English Updated successfully NID %s\r\n", $node->id());
 
-          if ( $node->hasTranslation('fr') ) {
+          if ($node->hasTranslation('fr')) {
             $nodeFr = $node->getTranslation('fr');
             foreach ($nodeArrayFr as $field => $values) {
               $nodeFr->set($field, $values);
@@ -867,8 +854,10 @@ function create_node($location, $contentType) {
 
             // Log
             $logVariationFields .= sprintf("- French Updated successfully NID %s\r\n", $nodeFr->id());
-          } else if ($nodeArrayFr['title']['value'] != ''
-              && (($contentType == 'complaint_link' && $nodeArrayFr['field_link_complaint'] != '') || ($contentType == 'info_link' && $nodeArrayFr['field_link_info'] != '')) ) {
+          } else if (
+            $nodeArrayFr['title']['value'] != ''
+            && (($contentType == 'complaint_link' && $nodeArrayFr['field_link_complaint'] != '') || ($contentType == 'info_link' && $nodeArrayFr['field_link_info'] != ''))
+          ) {
             $nodeFr = $node->addTranslation('fr', $nodeArrayFr);
             $nodeFr->title = $nodeArrayFr['title']['value'];
             $nodeFr->save();
@@ -884,8 +873,10 @@ function create_node($location, $contentType) {
         } else {
           $action = 'insert';
           $nodeArrayEn['moderation_state'] = $nodeArrayFr['moderation_state'] = 'published';
-          if ($nodeArrayEn['title']['value'] != ''
-              && (($contentType == 'complaint_link' && $nodeArrayEn['field_link_complaint'] != '') || ($contentType == 'info_link' && $nodeArrayEn['field_link_info'] != '')) ) {
+          if (
+            $nodeArrayEn['title']['value'] != ''
+            && (($contentType == 'complaint_link' && $nodeArrayEn['field_link_complaint'] != '') || ($contentType == 'info_link' && $nodeArrayEn['field_link_info'] != ''))
+          ) {
             $node = Node::create($nodeArrayEn);
             $node->uid = 1;
             $node->save();
@@ -894,8 +885,10 @@ function create_node($location, $contentType) {
             $logVariationFields .= sprintf("- English Imported successfully NID %s\r\n", $node->id());
 
             // If French data exists, add the translation
-            if ($nodeArrayFr['title']['value'] != ''
-                && (($contentType == 'complaint_link' && $nodeArrayFr['field_link_complaint'] != '') || ($contentType == 'info_link' && $nodeArrayFr['field_link_info'] != '')) ) {
+            if (
+              $nodeArrayFr['title']['value'] != ''
+              && (($contentType == 'complaint_link' && $nodeArrayFr['field_link_complaint'] != '') || ($contentType == 'info_link' && $nodeArrayFr['field_link_info'] != ''))
+            ) {
               $nodeFr = $node->addTranslation('fr', $nodeArrayFr);
               $nodeFr->title = $nodeArrayFr['title']['value'];
               $nodeFr->save();
@@ -921,18 +914,18 @@ function create_node($location, $contentType) {
       } else {
         $message = t('Import completed successfully');
         \Drupal::messenger()->addMessage($message);
-        if($contentType=='info_link'){
+        if ($contentType == 'info_link') {
+
           $file = File::load($fid);
-          $new_filename = $request_time.".csv";
+          $new_filename = $request_time . ".csv";
           $stream_wrapper = \Drupal::service('file_system')->uriScheme($file->getFileUri());
           $new_filename_uri = "{$stream_wrapper}://{$new_filename}";
           file_move($file, $new_filename_uri);
           drupal_set_message(t('file has been renamed'));
-
         }
       }
 
-    //  $url = $base_url . "/admin/config/system/cron";
+      //  $url = $base_url . "/admin/config/system/cron";
       //header('Location:' . $url);
       //exit;
     }
