@@ -8,6 +8,7 @@ use Drupal\Core\Form\FormStateInterface;
 use Drupal\Core\Url;
 use Drupal\Core\Ajax\AjaxResponse;
 use Drupal\Core\Ajax\HtmlCommand;
+use Drupal\file\Entity\File;
 
 /**
  * Configure Content Import settings for this site.
@@ -34,7 +35,7 @@ class ContentImport extends ConfigFormBase {
    * Content Import Form.
    */
   public function buildForm(array $form, FormStateInterface $form_state) {
-    $contentTypes = ContentImportController::getAllContentTypes();
+  /*  $contentTypes = ContentImportController::getAllContentTypes();
     $form['contentimport_contenttype'] = [
       '#type' => 'select',
       '#title' => $this->t('Select Content Type'),
@@ -51,16 +52,19 @@ class ContentImport extends ConfigFormBase {
           'message' => NULL,
         ],
       ],*/
-    ];
+  //  ];
 
     $form['file_upload'] = [
-      '#type' => 'file',
+      '#type' => 'managed_file',
       '#title' => $this->t('Import CSV File'),
       '#size' => 40,
       '#description' => $this->t('Select the CSV file to be imported.'),
-      '#required' => FALSE,
+      '#required' => TRUE,
       '#autoupload' => TRUE,
-      '#upload_validators' => ['file_validate_extensions' => ['csv']],
+      '#upload_location' => 'public://',
+      '#upload_validators' => array(
+        'file_validate_extensions' => array('csv'),
+      ),
     ];
 
     $form['loglink'] = [
@@ -76,7 +80,7 @@ class ContentImport extends ConfigFormBase {
 
     $form['submit'] = [
       '#type' => 'submit',
-      '#value' => $this->t('Import'),
+      '#value' => $this->t('Upload'),
       '#button_type' => 'primary',
     ];
 
@@ -86,12 +90,17 @@ class ContentImport extends ConfigFormBase {
   /**
    * {@inheritdoc}
    */
+  
   public function validateForm(array &$form, FormStateInterface $form_state) {
-    $this->file = file_save_upload('file_upload', $form['file_upload']['#upload_validators'], FALSE, 0);
+ /*   $this->managed_file = file_save_upload('file_upload', $form['file_upload']['#upload_validators'], FALSE, 0);
 
-    if (!$this->file) {
-      $form_state->setErrorByName('file_upload', $this->t('Provided file is not a CSV file or is corrupted.'));
-    }
+    if (!$this->managed_file) {
+      $form_state->setErrorByName('file_upload', $this->t('Provided file is not a CSV file or is corrupted.'));*/
+
+ /* if($form_state->getValue('contentimport_contenttype')=='none'){
+    $form_state->setErrorByName('contentimport_contenttype', $this->t('Select a Content Type'));
+
+  }*/
   }
 
   /**
@@ -121,8 +130,14 @@ class ContentImport extends ConfigFormBase {
    * Content Import Form Submission.
    */
   public function submitForm(array &$form, FormStateInterface $form_state) {
-    $contentType = $form_state->getValue('contentimport_contenttype');
-    create_node($this->file, $contentType);
+ 
+    $fid = $form_state->getValue(['file_upload', 0]);
+    $file = File::load($fid);
+    $new_filename = "import.csv";
+    $stream_wrapper = \Drupal::service('file_system')->uriScheme($file->getFileUri());
+    $new_filename_uri = "{$stream_wrapper}://{$new_filename}";
+    file_move($file, $new_filename_uri);
+    drupal_set_message(t('file has been uploaded'));
   }
 
 }

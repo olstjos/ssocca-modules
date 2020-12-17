@@ -484,11 +484,46 @@ function format_header($header, $contentType) {
 }
 
 /**
+ * Implements hook_cron().
+ */
+function contentimport_cron() {  
+  /*$files = \Drupal::entityTypeManager()
+  ->getStorage('file')
+  ->loadByProperties(['uri' => 'public://import.csv']);
+  $file = reset($files);*/
+ /*
+
+  $files_il = \Drupal::entityTypeManager()
+  ->getStorage('file')
+  ->loadByProperties(['uri' => 'public://info_link.csv']);
+  $file_il=reset($files_il);*/
+
+//  if($file_cl){
+
+    create_node('public://import.csv','complaint_link');
+  //}
+ // else if($file_il){
+
+    create_node('public://import.csv','info_link');
+ // }  
+  
+}
+
+/**
  * To import data as Content type nodes.
  */
-function create_node($filedata, $contentType) {
+function create_node($location, $contentType) {
+
   drupal_flush_all_caches();
   global $base_url;
+
+  $files = \Drupal::entityTypeManager()
+  ->getStorage('file')
+  ->loadByProperties(['uri' => $location]);
+  $file=reset($files);
+  $fid=$file->fid->value;
+
+  $request_time = \Drupal::time()->getCurrentTime();
 
   $logFileName = "contentimportlog.txt";
   $logFile = fopen("sites/default/files/" . $logFileName, "w") or die("There is no permission to create log file. Please give permission for sites/default/file!");
@@ -499,7 +534,8 @@ function create_node($filedata, $contentType) {
   // Code for import csv file.
   $mimetype = 1;
   if ($mimetype) {
-    $location = $filedata->destination;
+  //  $location ='sites/default/files/cch_import_template_test_0.csv' ;
+    //echo $location;exit;
     if (($handle = fopen($location, "r")) !== FALSE) {
       $keyIndex = [];
       $index = 0;
@@ -560,7 +596,7 @@ function create_node($filedata, $contentType) {
             ($contentType == 'complaint_link' && !isset($keyIndex['field_link_complaint'])) ) {
           \Drupal::messenger()
             ->addError(t('Title and/or link is missing in CSV file. Please add these fields and import again'));
-          $url = $base_url . "/admin/config/content/contentimport";
+          $url = $base_url . "/admin/config/system/cron";
           header('Location:' . $url);
           exit;
         }
@@ -851,6 +887,7 @@ function create_node($filedata, $contentType) {
           if ($nodeArrayEn['title']['value'] != ''
               && (($contentType == 'complaint_link' && $nodeArrayEn['field_link_complaint'] != '') || ($contentType == 'info_link' && $nodeArrayEn['field_link_info'] != '')) ) {
             $node = Node::create($nodeArrayEn);
+            $node->uid = 1;
             $node->save();
 
             // Log
@@ -884,10 +921,20 @@ function create_node($filedata, $contentType) {
       } else {
         $message = t('Import completed successfully');
         \Drupal::messenger()->addMessage($message);
+        if($contentType=='info_link'){
+          $file = File::load($fid);
+          $new_filename = $request_time.".csv";
+          $stream_wrapper = \Drupal::service('file_system')->uriScheme($file->getFileUri());
+          $new_filename_uri = "{$stream_wrapper}://{$new_filename}";
+          file_move($file, $new_filename_uri);
+          drupal_set_message(t('file has been renamed'));
+
+        }
       }
-      $url = $base_url . "/admin/config/content/contentimport";
-      header('Location:' . $url);
-      exit;
+
+    //  $url = $base_url . "/admin/config/system/cron";
+      //header('Location:' . $url);
+      //exit;
     }
   }
 }
