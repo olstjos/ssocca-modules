@@ -42,7 +42,7 @@ class ContentImport extends ConfigFormBase {
       '#options' => $contentTypes,
       '#default_value' => $this->t('Select'),
       '#required' => TRUE,
-      /*
+      
       '#ajax' => [
         'event' => 'change',
         'callback' => '::contentImportcallback',
@@ -51,8 +51,8 @@ class ContentImport extends ConfigFormBase {
           'type' => 'throbber',
           'message' => NULL,
         ],
-      ],*/
-  //  ];
+      ],
+    ];*/
   
 
     $form['file_upload'] = [
