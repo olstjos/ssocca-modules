@@ -434,11 +434,11 @@ class PreviousDevelopersCode {
               \Drupal::messenger()->addError('Multiple existing records found?? one example nid=' . $matchingEn[0]);
               continue;
             } elseif (count($matchingEn) == 1) {
-              $logVariationFields .= sprintf("- count($matchingEn) == 1 NID %s\r\n", $node->id());
               // We're doing an update
               $action = 'update';
               \Drupal::logger('TESTupdate')->notice('<pre>update ' . print_r($matchingEn, TRUE) . '</pre>');
               $node = Node::load($matchingEn[0]);
+              $logVariationFields .= sprintf("- count($matchingEn) == 1 NID %s\r\n", $node->id());
               foreach ($nodeArrayEn as $field => $values) {
                 \Drupal::logger('DEBUG'.$field)->notice('<pre>update ' . print_r($values, TRUE) . '</pre>');
                 if (is_array($values) && count($values) > 0) {
@@ -451,13 +451,13 @@ class PreviousDevelopersCode {
                           else {
                               $vocab = 'province';
                           }
-                          if (!isset($processed_tids[$vocab])) {
-                              $processed_tids[$vocab] = [];
+                          if (!isset($processed_tids[$vocab][$node->id()])) {
+                              $processed_tids[$vocab][$node->id()] = [];
                           }
-                          if (!in_array($processed_tids[$vocab], $val['target_id'])) {
-                            $node->{$field}[] = $val['target_id'];                              
+                          if (!in_array($processed_tids[$vocab][$node->id()], [$val['target_id']])) {
+                            $node->{$field}[] = $val['target_id'];
+                            $processed_tids[$vocab][$node->id()] = $val['target_id'];
                           }
-                          $processed_tids[$vocab] = $val['target_id'];
                         }
                         else {
                             
@@ -641,11 +641,11 @@ class PreviousDevelopersCode {
                 ->condition('field_source', $node->field_source->getValue())
                 ->execute();
               if (!isset($processed_tids[$vocab])) {
-                  $processed_tids[$vocab] = [];
+                  $processed_tids[$vocab][$node->id()] = [];
               }
-              if (is_numeric($tid) && count($result) == 0 && !in_array($processed_tids[$vocab], $tid)) {
+              if (is_numeric($tid) && count($result) == 0 && !in_array($processed_tids[$vocab][$node->id()], $tid)) {
                 $node->{$field}[] = $tid;
-                $processed_tids[$vocab][$node->id] = $tid;
+                $processed_tids[$vocab][$node->id()] = $tid;
               }
             }
             return $processed_tids;
