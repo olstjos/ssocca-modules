@@ -25,4 +25,22 @@ class ContentImportController extends ControllerBase {
     return $contentTypesList;
   }
 
+
+  public function getLog() {
+    $from = (int) ($_GET['from'] ?? 0);
+    $messages = file('/tmp/oca-log');
+    $length = count($messages);
+    $next = $length;
+    if ($length > 0 && substr($messages[$length-1], 0, 3) == '---') {
+      $next = false;
+    }
+    if ($from > 0) {
+      $messages = array_slice($messages, $from);
+    }
+    if ($next === false) {
+      array_pop($messages);
+    }
+    return new JsonResponse(['status' => 'ok', 'from' => $from, 'next' => $next, 'messages' => $messages]);
+  }
+
 }

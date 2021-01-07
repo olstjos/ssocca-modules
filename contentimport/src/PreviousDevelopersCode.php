@@ -18,8 +18,27 @@ use Drupal\user\Entity\User;
  */
 class PreviousDevelopersCode {
 
+    public static function md5_validation($chaine) {
+      $md5 = $chaine;
+      if (strpos($md5,':') > 0) {
+        // Still serialized, make it an md5.
+        $md5 = md5($md5);
+      }
+      $result = \Drupal::entityTypeManager()->getStorage('node')->getQuery()
+        ->condition('field_md5', $md5, 'IN')
+        ->execute();
+      if (count($result) > 0) {
+        return FALSE;
+      }
+      return TRUE;
+    }
+
     public static function sha_validation($chaine) {
-      $md5 = md5($chaine);
+      $md5 = $chaine;
+      if (strpos($md5,':') > 0) {
+        // Still serialized, make it an md5.
+        $md5 = md5($md5);
+      }
       $result = \Drupal::entityTypeManager()->getStorage('node')->getQuery()
       ->condition('field_sha', $md5)
       ->execute();
@@ -45,7 +64,7 @@ class PreviousDevelopersCode {
 
 
       \Drupal::logger('TEST')->notice('<pre>' . print_r($location, TRUE) . '</pre>');
-      \Drupal::logger('TEST')->notice('<pre>' . print_r($contentType, TRUE) . '</pre>');
+      //\Drupal::logger('TEST')->notice('<pre>' . print_r($contentType, TRUE) . '</pre>');
       $request_time = \Drupal::time()->getCurrentTime();
       $logFileName = "contentimportlog.txt";
       $logFile = fopen("sites/default/files/" . $logFileName, "w") or die("There is no permission to create log file. Please give permission for sites/default/file!");
@@ -53,6 +72,8 @@ class PreviousDevelopersCode {
       $fieldNames = $fields['name'];
       $fieldTypes = $fields['type'];
       $fieldSettings = $fields['setting'];
+      $bag_of_md5s = [];
+      $processed_tids = [];
       // Code for import csv file.
       $mimetype = 1;
       if ($mimetype) {
@@ -109,13 +130,40 @@ class PreviousDevelopersCode {
                 continue;
               }
             }
+            $array_partiel = []; // Réinitialiser.
             // Ajouter validation pour sha ici:
+            $title_check = $data[0/*title*/];
+            $source_check = $data[8/*field_source*/];
+            $link_check = $data[4/*field_link_info OR field_link_complaint??*/];
+            
+            if (empty($title_check) || empty($source_check) || empty($link_check)) {
+                \Drupal::logger('ERROR')->notice('<pre>title_check OR link_check OR source_check was empty</pre>');
+                continue;
+            }
+//            if ($index > 5) {
+//               continue;
+//            }
+//            else {
+//              \Drupal::logger('KEYINDEX')->notice('<pre>' . print_r($keyIndex, TRUE) . '</pre>');
+//              \Drupal::logger('DATA')->notice('<pre>' . print_r($data, TRUE) . '</pre>');
+//            }
+            $array_partiel['title'] = $title_check;
+            $array_partiel['field_source'] = $source_check;
+            $array_partiel['field_link'] = $link_check;
+            \Drupal::logger('ARRAY_PARTIEL')->notice('<pre>' . $index  . '|'. print_r($array_partiel, TRUE) . '</pre>');
             $chaine_ensemble = serialize($data);
+            $md5_partiel = serialize($array_partiel);
             if (!self::sha_validation($chaine_ensemble)) {
                 $countErreur++;
-/*\Drupal::messenger()
+\Drupal::messenger()
                 ->addError('Appel les pompiers!!!' . $countErreur);
-              continue;*/
+              //continue;
+            }
+            if (!self::md5_validation(md5($md5_partiel))) {
+                $countErreur++;
+/*\Drupal::messenger()
+                ->addError('Appel les secours!!!' . $countErreur);*/
+              //continue;
             }
             if (
               !isset($keyIndex['title']) ||
@@ -280,7 +328,10 @@ class PreviousDevelopersCode {
                   }
                   //$logVariationFields .= " Success \n";
                   break;
-
+                case 'moderation_state':
+                case 'field_sha':
+                case 'field_md5':
+                  break;
                 case 'entity_reference_revisions':
                   /* In Progress */
                   break;
@@ -324,7 +375,12 @@ class PreviousDevelopersCode {
 
                 case 'authored_by':
                   //$logVariationFields .= "Importing Content (" . $fieldNames[$f] . ") :: ";
-                  $user_id = self::get_user_id($data[$keyIndex[$fieldNames[$f]]]);
+                  if (isset($data[$keyIndex[$fieldNames[$f]]])) {
+                    $user_id = self::get_user_id($data[$keyIndex[$fieldNames[$f]]]);                      
+                  }
+                  else {
+                    $user_id = \Drupal::currentUser()->id();
+                  }
                   $nodeArrayEn['uid'] = ($user_id > 0) ? $user_id : \Drupal::currentUser()->id();
                   //$logVariationFields .= " Success \n";
                   break;
@@ -360,27 +416,79 @@ class PreviousDevelopersCode {
               }
             }
 
-            $matchingEn = self::get_matching_nodes($nodeArrayEn);
-            $matchingFr = self::get_matching_nodes($nodeArrayFr);
+            //$matchingEn = self::get_matching_nodes($nodeArrayEn);
+            //$matchingFr = self::get_matching_nodes($nodeArrayFr);
+            
+            $matchingEn = self::get_matching_nodes_by_hashes($nodeArrayEn, $chaine_ensemble, $md5_partiel);
+            //$matchingFr = self::get_matching_nodes_by_hashes($nodeArrayFr, $chaine_ensemble, $md5_partiel);
             /*
             print "<pre>";
             print_r($nodeArrayEn);
             print_r($nodeArrayFr);
             die();
             */
-
+      \Drupal::logger('TESTen')->notice('<pre>' . print_r($matchingEn, TRUE) . '</pre>');
             if (count($matchingEn) > 1) {
               // Log error
               $logVariationFields .= "- Multiple existing records found\r\n";
+              \Drupal::messenger()->addError('Multiple existing records found?? one example nid=' . $matchingEn[0]);
               continue;
             } elseif (count($matchingEn) == 1) {
+              $logVariationFields .= sprintf("- count($matchingEn) == 1 NID %s\r\n", $node->id());
               // We're doing an update
               $action = 'update';
+              \Drupal::logger('TESTupdate')->notice('<pre>update ' . print_r($matchingEn, TRUE) . '</pre>');
               $node = Node::load($matchingEn[0]);
               foreach ($nodeArrayEn as $field => $values) {
-                $node->set($field, $values);
+                \Drupal::logger('DEBUG'.$field)->notice('<pre>update ' . print_r($values, TRUE) . '</pre>');
+                if (is_array($values) && count($values) > 0) {
+                    foreach($values as $val) {
+                      if (isset($val['target_id'])) {
+                        if ($field == 'field_sector' || $field == 'field_province') {
+                          if ($field == 'field_sector') {
+                              $vocab = 'sector';
+                          }
+                          else {
+                              $vocab = 'province';
+                          }
+                          if (!isset($processed_tids[$vocab])) {
+                              $processed_tids[$vocab] = [];
+                          }
+                          if (!in_array($processed_tids[$vocab], $val['target_id'])) {
+                            $node->{$field}[] = $val['target_id'];                              
+                          }
+                          $processed_tids[$vocab] = $val['target_id'];
+                        }
+                        else {
+                            
+                          $node->{$field}[] = $val['target_id'];   
+                        }
+                      }
+                    }                    
+                }
+                if (1 || !isset($values[0]['target_id'])) {
+                  switch ($field) {
+                    case 'entity_reference':
+                      $vocab = 'province';
+                      if ($field == 'field_sector') {
+                        $vocab = 'sector';
+                      }
+                      else if ($field == 'field_province') {
+                        $vocab = 'province';
+                      }
+                      self::term_help_setter($node, $values, $vocab, $field, $processed_tids);
+                      break;
+                    default:
+                      break;
+                  }
+                }
+                //$node->set($field, $values); // DISABLED!
               }
-              $node->set('field_sha', md5($chaine_ensemble));
+               //$node->set('field_sha', md5($chaine_ensemble));
+              if (self::md5_validation($md5_partiel)) {
+                $node->field_md5[] = md5($md5_partiel);
+              }
+
               $node->save();
               // Log
               $logVariationFields .= sprintf("- English Updated successfully NID %s\r\n", $node->id());
@@ -388,7 +496,15 @@ class PreviousDevelopersCode {
               if ($node->hasTranslation('fr')) {
                 $nodeFr = $node->getTranslation('fr');
                 foreach ($nodeArrayFr as $field => $values) {
-                  $nodeFr->set($field, $values);
+                  //$nodeFr->set($field, $values);
+                  switch ($field) {
+                    case 'field_link':
+                    case 'field_source':
+                      $nodeFr->set($field, $values);
+                      break;
+                    default:
+                      break;
+                  }
                 }
                 $nodeFr->save();
 
@@ -410,7 +526,7 @@ class PreviousDevelopersCode {
               }
 
               //fwrite($logFile, $logVariationFields);
-            } else {
+            } else if (!in_array($bag_of_md5s, [md5($md5_partiel)]) && self::md5_validation(md5($md5_partiel))) {
               $action = 'insert';
               $nodeArrayEn['moderation_state'] = $nodeArrayFr['moderation_state'] = 'published';
               if (
@@ -420,8 +536,12 @@ class PreviousDevelopersCode {
                 $node = Node::create($nodeArrayEn);
                 $node->uid = 1;
                 $node->set('field_sha', md5($chaine_ensemble));
+                if (strpos($md5_partiel, ':') > 0) {
+                  $md5_partiel = md5($md5_partiel);
+                }
+                $node->set('field_md5', $md5_partiel);
+                $bag_of_md5s[] = $md5_partiel;
                 $node->save();
-
                 // Log
                 $logVariationFields .= sprintf("- English Imported successfully NID %s\r\n", $node->id());
 
@@ -442,6 +562,9 @@ class PreviousDevelopersCode {
                 }
                 //fwrite($logFile, $logVariationFields);
               }
+            }
+            else {
+              $logVariationFields .= "----------md5 in bag no add---------------\r\n";                
             }
             $logVariationFields .= "----------------------------------------\r\n";
           }
@@ -471,6 +594,82 @@ class PreviousDevelopersCode {
         }
       }
     }
+    
+    
+  /**
+    * @TODO
+    * 
+    * @param object $node (Drupal node, objects are passed by ref automatically).
+    * @param string $termvalues ,multiple term labels separated by : or single value.
+    * @param string $vocab name of taxonomy vocabulary.
+    * @param string $field name of node/entity field to update.
+    */
+//    public static function tidRefExists($node, $termvalues, $vocab, $field) {
+//    {
+//              $entityStorage = \Drupal::entityTypeManager()->getStorage('node');
+//              $result = $entityStorage->getQuery()
+//              ->condition($field, $tid, 'IN')
+//              ->condition('title', $node->title)
+//              ->condition('field_source', $node->field_source)
+//              ->execute();
+//            if (count($result) == 0) {
+//            }
+//    }
+    
+    
+   /**
+    * Set term ids on field using label and vocab name.
+    * 
+    * @param object $node (Drupal node, objects are passed by ref automatically).
+    * @param string $termvalues ,multiple term labels separated by : or single value.
+    * @param string $vocab name of taxonomy vocabulary.
+    * @param string $field name of node/entity field to update.
+    */
+    public static function term_help_setter($node, $termvalues, $vocab, $field, &$processed_tids) {
+        $tids = [];
+        if (is_array($termvalues) && isset($termvalues[0]['target_id'])) {
+            $entityStorage = \Drupal::entityTypeManager()->getStorage('node');
+            foreach($termvalues as $termvalue) {
+              $tid = $termvalue['target_id'];
+              $tids[] = $termvalue['target_id'];
+            }
+            $tids = array_unique($tids);
+            foreach ($tids as $tid) {
+              $result = $entityStorage->getQuery()
+                ->condition($field, $tid, 'IN')
+                ->condition('title', $node->title)
+                ->condition('field_source', $node->field_source->getValue())
+                ->execute();
+              if (!isset($processed_tids[$vocab])) {
+                  $processed_tids[$vocab] = [];
+              }
+              if (is_numeric($tid) && count($result) == 0 && !in_array($processed_tids[$vocab], $tid)) {
+                $node->{$field}[] = $tid;
+                $processed_tids[$vocab][$node->id] = $tid;
+              }
+            }
+            return $processed_tids;
+            $term_csv = implode(',', $tids);
+            return;
+        }
+        if (strpos($termvalues, ':') > 0) {
+          $ref_array = explode(':', $values);
+
+          foreach ($ref_array as $ref) {
+            $tid = self::get_term_id($ref, $vocab);
+            if (is_numeric($tid)) {
+                $node->{$field}[] = $tid;
+            }    
+          }
+        }
+        else {
+          $tid = self::get_term_id($termvalues, $vocab);
+          if (is_numeric($tid)) {
+            $node->{$field}[] = $tid;
+          }
+        }
+    }
+
     //put your code here
     /**
     * To Create Terms if it is not available.
@@ -539,17 +738,34 @@ class PreviousDevelopersCode {
    /**
     * To get Termid available.
     */
-   public static function get_term_id($term, $vid)
+   public static function get_term_id($termname, $vid)
    {
-     $query = \Drupal::database()->select('taxonomy_term_field_data', 't');
-     $query->fields('t', ['tid']);
-     $query->condition('t.vid', $vid);
-     $query->condition('t.name', $term);
-     $termRes = $query->execute()->fetchAll();
-     foreach ($termRes as $val) {
-       $term_id = $val->tid;
-     }
-     return $term_id;
+        $query = \Drupal::entityQuery('taxonomy_term'); 
+        $query->condition('vid', $vid); //select the collection
+        $query->condition('name', $termname, 'CONTAINS'); //searching the title for a search term
+        $term_ids= $query->execute();
+        $terms = \Drupal\taxonomy\Entity\Term::loadMultiple($term_ids);  //process the nodes however is desired
+
+        $result = [];
+        $term_id = NULL;
+        foreach($terms as $term){
+          //$result[$term->id()] = $term->getName();
+          // Grab the first one.
+          $term_id = $term->id();
+          return $term->id();
+        }
+        return $term_id;
+//
+//            return $result;
+//     $query = \Drupal::database()->select('taxonomy_term_field_data', 't');
+//     $query->fields('t', ['tid']);
+//     $query->condition('t.vid', $vid);
+//     $query->condition('t.name', $termname);
+//     $termRes = $query->execute()->fetchAll();
+//     foreach ($termRes as $val) {
+//       $term_id = $val->tid;
+//     }
+//     return $term_id;
    }
 
 
@@ -659,6 +875,70 @@ class PreviousDevelopersCode {
      return $uids;
    }
 
+   /**
+    * Get matching nids for given node data by hashkey
+    * 
+    * @param array $data Node data
+    * @param string $md5 hashkey value for title, field_link (or field_link_fr), and field_source
+    * @return array Matching node IDs
+    */
+   public static function get_matching_nodes_by_hashes($data, $sha, $md5)
+   {
+     if (strpos($md5,':') > 0) {
+       $md5 = md5($md5);
+     }
+     if (strpos($sha,':') > 0) {
+       $sha = md5($sha);
+     }
+     $nids = \Drupal::entityTypeManager()->getStorage('node')->getQuery()
+        ->condition('field_md5', $md5, 'IN')
+        ->execute();
+     //\Drupal::logger('QUERYts')->notice('<pre>' . print_r($testQuery->__toString(), TRUE) . '</pre>');
+     // \Drupal::logger('QUERYargs')->notice('<pre>' . print_r($testQuery->arguments(), TRUE) . '</pre>');
+     $values = array_values($nids);
+     return $values;
+     
+     /*$query = \Drupal::entityQuery('node')
+       ->condition('title', $data['title']['value'])
+       ->condition('field_source', $data[]
+       ->condition('type', $data['type']);*/
+//     $query = \Drupal::entityQuery('node')
+//       ->condition('field_md5', $md5, 'IN');
+//
+//     $nids = $query->execute();
+//     
+//     if (empty($nids)) {
+//         // Create an object of type Select.
+//        $database = \Drupal::database();
+//        $query = $database->select('node__field_md5', 'm');
+//
+//        // Add extra detail to this query object: a condition, fields and a range.
+//        $query->condition('m.field_md5_value', $md5);
+//        $query->fields('m', ['entity_id']);
+//        $nids = [];
+//        $result = $query->execute();
+//        foreach ($result as $record) {
+//          $nids[] = $record;
+//        }
+//
+//       // print_r($query->__toString());
+//       // print_r($query->arguments());
+//        return array_values($nids);
+//
+//     }
+//     return array_values($nids);
+     /*$nids = array_values($nids);
+     foreach ($nids as $nid) {
+       $node = Node::load($nids[0]);
+       $md5_array = $node->get('field_md5')->getValue();
+       if (in_array($md5_array, [$md5])) {
+         return $nids;
+       }
+         
+     }
+     return [];*/
+   }
+   
    /**
     * Get matching nids for given node data
     * 

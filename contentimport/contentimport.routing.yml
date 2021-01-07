@@ -5,3 +5,10 @@ contentimport.admin_settings:
     _title: 'Content Import'
   requirements:
     _permission: 'administer site configuration'
+contentimport.get_log:
+  path: '/admin/contentimport/get_log'
+  defaults:
+    _title: 'Get log'
+    _controller: '\Drupal\contentimport\Controller\ContentImportController::getLog'
+  requirements:
+    _permission: 'administer site configuration'
