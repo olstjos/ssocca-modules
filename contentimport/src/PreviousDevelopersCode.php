@@ -63,7 +63,7 @@ class PreviousDevelopersCode {
       $fid = $file->fid->value;
 
 
-      \Drupal::logger('TEST')->notice('<pre>' . print_r($location, TRUE) . '</pre>');
+      //\Drupal::logger('TEST')->notice('<pre>' . print_r($location, TRUE) . '</pre>');
       //\Drupal::logger('TEST')->notice('<pre>' . print_r($contentType, TRUE) . '</pre>');
       $request_time = \Drupal::time()->getCurrentTime();
       $logFileName = "contentimportlog.txt";
@@ -144,13 +144,13 @@ class PreviousDevelopersCode {
             $array_partiel['title'] = $title_check;
             $array_partiel['field_source'] = $source_check;
             $array_partiel['field_link'] = $link_check;
-            \Drupal::logger('ARRAY_PARTIEL')->notice('<pre>' . $index  . '|'. print_r($array_partiel, TRUE) . '</pre>');
+            //\Drupal::logger('ARRAY_PARTIEL')->notice('<pre>' . $index  . '|'. print_r($array_partiel, TRUE) . '</pre>');
             $chaine_ensemble = serialize($data);
             $md5_partiel = serialize($array_partiel);
             if (!self::sha_validation($chaine_ensemble)) {
                 $countErreur++;
-\Drupal::messenger()
-                ->addError('Appel les pompiers!!!' . $countErreur);
+                /*\Drupal::messenger()
+                  ->addError('Appel les pompiers!!!' . $countErreur);*/
               //continue;
             }
             if (!self::md5_validation(md5($md5_partiel))) {
@@ -421,7 +421,7 @@ class PreviousDevelopersCode {
             print_r($nodeArrayFr);
             die();
             */
-            \Drupal::logger('TESTen')->notice('<pre>' . print_r($matchingEn, TRUE) . '</pre>');
+            //\Drupal::logger('TESTen')->notice('<pre>' . print_r($matchingEn, TRUE) . '</pre>');
             if (count($matchingEn) > 1) {
               // Log error
               $logVariationFields .= "- Multiple existing records found\r\n";
@@ -430,7 +430,7 @@ class PreviousDevelopersCode {
             } elseif (count($matchingEn) == 1) {
               // We're doing an update
               $action = 'update';
-              \Drupal::logger('TESTupdate')->notice('<pre>update ' . print_r($matchingEn, TRUE) . '</pre>');
+              //\Drupal::logger('TESTupdate')->notice('<pre>update ' . print_r($matchingEn, TRUE) . '</pre>');
               $node = Node::load($matchingEn[0]);
               $logVariationFields .= sprintf("- count($matchingEn) == 1 NID %s\r\n", $node->id());
               foreach ($nodeArrayEn as $field => $values) {
