@@ -140,13 +140,7 @@ class PreviousDevelopersCode {
                 \Drupal::logger('ERROR')->notice('<pre>title_check OR link_check OR source_check was empty</pre>');
                 continue;
             }
-//            if ($index > 5) {
-//               continue;
-//            }
-//            else {
-//              \Drupal::logger('KEYINDEX')->notice('<pre>' . print_r($keyIndex, TRUE) . '</pre>');
-//              \Drupal::logger('DATA')->notice('<pre>' . print_r($data, TRUE) . '</pre>');
-//            }
+
             $array_partiel['title'] = $title_check;
             $array_partiel['field_source'] = $source_check;
             $array_partiel['field_link'] = $link_check;
@@ -427,7 +421,7 @@ class PreviousDevelopersCode {
             print_r($nodeArrayFr);
             die();
             */
-      \Drupal::logger('TESTen')->notice('<pre>' . print_r($matchingEn, TRUE) . '</pre>');
+            \Drupal::logger('TESTen')->notice('<pre>' . print_r($matchingEn, TRUE) . '</pre>');
             if (count($matchingEn) > 1) {
               // Log error
               $logVariationFields .= "- Multiple existing records found\r\n";
@@ -440,7 +434,7 @@ class PreviousDevelopersCode {
               $node = Node::load($matchingEn[0]);
               $logVariationFields .= sprintf("- count($matchingEn) == 1 NID %s\r\n", $node->id());
               foreach ($nodeArrayEn as $field => $values) {
-                \Drupal::logger('DEBUG'.$field)->notice('<pre>update ' . print_r($values, TRUE) . '</pre>');
+                //\Drupal::logger('DEBUG'.$field)->notice('<pre>update ' . print_r($values, TRUE) . '</pre>');
                 if (is_array($values) && count($values) > 0) {
                     foreach($values as $val) {
                       if (isset($val['target_id'])) {
@@ -454,20 +448,22 @@ class PreviousDevelopersCode {
                           if (!isset($processed_tids[$vocab][$node->id()])) {
                               $processed_tids[$vocab][$node->id()] = [];
                           }
-                          if (!in_array($processed_tids[$vocab][$node->id()], [$val['target_id']])) {
+                          if (!in_array($val['target_id'], $processed_tids[$vocab][$node->id()])) {
+                            // Only process the tid if it's NOT found.
                             $node->{$field}[] = $val['target_id'];
-                            $processed_tids[$vocab][$node->id()] = $val['target_id'];
+                            $processed_tids[$vocab][$node->id()][] = $val['target_id'];
                           }
                         }
                         else {
-                            
-                          $node->{$field}[] = $val['target_id'];   
+                          if (!in_array($val['target_id'], $processed_tids[$field][$node->id()])) {
+                              $node->{$field}[] = $val['target_id'];
+                              $processed_tids[$field][$node->id()][] = $val['target_id'];
+                          }
                         }
                       }
                     }                    
                 }
-                if (1 || !isset($values[0]['target_id'])) {
-                  switch ($field) {
+                switch ($field) {
                     case 'entity_reference':
                       $vocab = 'province';
                       if ($field == 'field_sector') {
@@ -480,7 +476,6 @@ class PreviousDevelopersCode {
                       break;
                     default:
                       break;
-                  }
                 }
                 //$node->set($field, $values); // DISABLED!
               }
@@ -488,6 +483,29 @@ class PreviousDevelopersCode {
               if (self::md5_validation($md5_partiel)) {
                 $node->field_md5[] = md5($md5_partiel);
               }
+  
+//              $link_field_name = 'field_link_info';
+//              if (!$node->field_link_other_lang) {
+//                if ($node->hasField('field_link_info') && $node->field_link_info->hasTranslation()) {
+//                    $en_link = $node->field_link_info;
+//                    $fr_link = $node->getTranslation('fr')->field_link_info;
+//                    if ($en_link != $fr_link) {
+//                      if (!empty($en_link) && !empty($fr_link)) {
+//                        $node->set('field_link_other_lang', TRUE);
+//                      }                        
+//                    }
+//                }
+//                else if ($node->hasField('field_link_complaint')) {
+//                    $en_link = $node->field_link_complaint;
+//                    $fr_link = $node->getTranslation('fr')->field_link_complaint;
+//                    if ($en_link != $fr_link) {
+//                      if (!empty($en_link) && !empty($fr_link)) {
+//                        $node->set('field_link_other_lang', TRUE);
+//                      }
+//                    }
+//                }
+//              }
+// 
 
               $node->save();
               // Log
@@ -526,7 +544,7 @@ class PreviousDevelopersCode {
               }
 
               //fwrite($logFile, $logVariationFields);
-            } else if (!in_array($bag_of_md5s, [md5($md5_partiel)]) && self::md5_validation(md5($md5_partiel))) {
+            } else if (!in_array(md5($md5_partiel), $bag_of_md5s) && self::md5_validation(md5($md5_partiel))) {
               $action = 'insert';
               $nodeArrayEn['moderation_state'] = $nodeArrayFr['moderation_state'] = 'published';
               if (
@@ -643,9 +661,9 @@ class PreviousDevelopersCode {
               if (!isset($processed_tids[$vocab])) {
                   $processed_tids[$vocab][$node->id()] = [];
               }
-              if (is_numeric($tid) && count($result) == 0 && !in_array($processed_tids[$vocab][$node->id()], $tid)) {
+              if (is_numeric($tid) && count($result) == 0 && !in_array($tid, $processed_tids[$vocab][$node->id()])) {
                 $node->{$field}[] = $tid;
-                $processed_tids[$vocab][$node->id()] = $tid;
+                $processed_tids[$vocab][$node->id()][] = $tid;
               }
             }
             return $processed_tids;
