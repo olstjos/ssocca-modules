@@ -248,3 +248,32 @@ function contentimport_cron()
 }
 
 
+/**
+ * Implements hook_ENTITY_TYPE_presave().
+ */
+function contentimport_node_presave(Drupal\Core\Entity\EntityInterface $entity) {
+
+  // Exit early if possible.
+  if ($entity->getEntityTypeId() != 'node') {
+    return;
+  }
+
+  $content_type = $entity->bundle();
+  if ($content_type == 'complaint_link' || $content_type == 'info_link') {
+    $provinces = $entity->get('field_province')->value();
+    $provinces = array_unique($provinces);
+    $entity->set('field_province', $provinces);
+    
+    $sectors = $entity->get('field_sector')->value();
+    $sectors = array_unique($sectors);
+    $entity->set('field_sector', $sectors);
+  }
+
+  if ($content_type == 'complaint_link') {
+    
+  }
+
+  if ($content_type == 'info_link') {
+  }
+
+}
