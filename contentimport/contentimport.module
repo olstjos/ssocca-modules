@@ -260,13 +260,23 @@ function contentimport_node_presave(Drupal\Core\Entity\EntityInterface $entity) 
 
   $content_type = $entity->bundle();
   if ($content_type == 'complaint_link' || $content_type == 'info_link') {
-    $provinces = $entity->get('field_province')->value();
-    $provinces = array_unique($provinces);
-    $entity->set('field_province', $provinces);
+    $provinces = $entity->get('field_province');
+    $ptids = [];
+    foreach ($provinces as $ptid) {
+      $ptids[] = $ptid->target_id;
+    }
     
-    $sectors = $entity->get('field_sector')->value();
-    $sectors = array_unique($sectors);
-    $entity->set('field_sector', $sectors);
+    $ptids = array_unique($ptids);
+    //$entity->set('field_province', $ptids);
+    $entity->{'field_province'} = $ptids;
+    
+    $sectors = $entity->get('field_sector');
+    $stids = [];
+    foreach ($sectors as $stid) {
+      $stids[] = $stid->target_id;
+    }
+    $stids = array_unique($stids);
+    $entity->{'field_sector'} = $stids;
   }
 
   if ($content_type == 'complaint_link') {

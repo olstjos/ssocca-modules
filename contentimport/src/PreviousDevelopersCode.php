@@ -114,7 +114,7 @@ class PreviousDevelopersCode {
                   $i++;
                 }
               }
-              
+
               // Header
               $headerFields = $data;
               continue;
@@ -130,12 +130,23 @@ class PreviousDevelopersCode {
                 continue;
               }
             }
+            $dataTemp = $data;
+            foreach($dataTemp as $testValue => $keyTemp) {
+              // Trim.
+              if (is_string($testValue)) {
+                $data[$keyTemp] = trim($testValue);
+              }
+              else {
+                $data[$keyTemp] = $testValue;
+              }
+            }
             $array_partiel = []; // Réinitialiser.
             // Ajouter validation pour sha ici:
             $title_check = $data[0/*title*/];
             $source_check = $data[8/*field_source*/];
             $link_check = $data[4/*field_link_info OR field_link_complaint??*/];
-            
+            $data[4] = rtrim($link_check, '/'); // Remove trailing forward slash if it exists. // DATA CLEANING DUE TO INCONSISTENT CSV INPUT DATA.
+
             if (empty($title_check) || empty($source_check) || empty($link_check)) {
                 \Drupal::logger('ERROR')->notice('<pre>title_check OR link_check OR source_check was empty</pre>');
                 continue;
@@ -370,7 +381,7 @@ class PreviousDevelopersCode {
                 case 'authored_by':
                   //$logVariationFields .= "Importing Content (" . $fieldNames[$f] . ") :: ";
                   if (isset($data[$keyIndex[$fieldNames[$f]]])) {
-                    $user_id = self::get_user_id($data[$keyIndex[$fieldNames[$f]]]);                      
+                    $user_id = self::get_user_id($data[$keyIndex[$fieldNames[$f]]]);
                   }
                   else {
                     $user_id = \Drupal::currentUser()->id();
@@ -412,7 +423,7 @@ class PreviousDevelopersCode {
 
             //$matchingEn = self::get_matching_nodes($nodeArrayEn);
             //$matchingFr = self::get_matching_nodes($nodeArrayFr);
-            
+
             $matchingEn = self::get_matching_nodes_by_hashes($nodeArrayEn, $chaine_ensemble, $md5_partiel);
             //$matchingFr = self::get_matching_nodes_by_hashes($nodeArrayFr, $chaine_ensemble, $md5_partiel);
             /*
@@ -461,7 +472,7 @@ class PreviousDevelopersCode {
                           }
                         }
                       }
-                    }                    
+                    }
                 }
                 switch ($field) {
                     case 'entity_reference':
@@ -483,7 +494,7 @@ class PreviousDevelopersCode {
               if (self::md5_validation($md5_partiel)) {
                 $node->field_md5[] = md5($md5_partiel);
               }
-  
+
 //              $link_field_name = 'field_link_info';
 //              if (!$node->field_link_other_lang) {
 //                if ($node->hasField('field_link_info') && $node->field_link_info->hasTranslation()) {
@@ -492,7 +503,7 @@ class PreviousDevelopersCode {
 //                    if ($en_link != $fr_link) {
 //                      if (!empty($en_link) && !empty($fr_link)) {
 //                        $node->set('field_link_other_lang', TRUE);
-//                      }                        
+//                      }
 //                    }
 //                }
 //                else if ($node->hasField('field_link_complaint')) {
@@ -505,7 +516,7 @@ class PreviousDevelopersCode {
 //                    }
 //                }
 //              }
-// 
+//
 
               $node->save();
               // Log
@@ -540,6 +551,16 @@ class PreviousDevelopersCode {
                 $logVariationFields .= sprintf("- French Imported successfully NID %s\r\n", $nodeFr->id());
               } else {
                 // Log
+                $nodeArrayFr['title']['value'] = $nodeArray['title']['value'];
+                $nodeArrayFr['body']['value'] = $nodeArray['body']['value'];
+                if ($contentType == 'complaint_link') {
+                  $nodeArrayFr['field_link_complaint']['value'] = $nodeArray['field_link_complaint']['value'];
+                }
+                else {
+                  $nodeArrayFr['field_link_info']['value'] = $nodeArray['field_link_info']['value'];
+                }
+                $nodeFr = $node->addTranslation('fr', $nodeArrayFr);
+                $nodeFr->title = $nodeArrayFr['title']['value'];// . ' - ' . $nodeArrayFr['field_source_fr']['value']
                 $logVariationFields .= "- French data not present\r\n";
               }
 
@@ -582,7 +603,7 @@ class PreviousDevelopersCode {
               }
             }
             else {
-              $logVariationFields .= "----------md5 in bag no add---------------\r\n";                
+              $logVariationFields .= "----------md5 in bag no add---------------\r\n";
             }
             $logVariationFields .= "----------------------------------------\r\n";
           }
@@ -612,11 +633,11 @@ class PreviousDevelopersCode {
         }
       }
     }
-    
-    
+
+
   /**
     * @TODO
-    * 
+    *
     * @param object $node (Drupal node, objects are passed by ref automatically).
     * @param string $termvalues ,multiple term labels separated by : or single value.
     * @param string $vocab name of taxonomy vocabulary.
@@ -633,11 +654,11 @@ class PreviousDevelopersCode {
 //            if (count($result) == 0) {
 //            }
 //    }
-    
-    
+
+
    /**
     * Set term ids on field using label and vocab name.
-    * 
+    *
     * @param object $node (Drupal node, objects are passed by ref automatically).
     * @param string $termvalues ,multiple term labels separated by : or single value.
     * @param string $vocab name of taxonomy vocabulary.
@@ -666,6 +687,7 @@ class PreviousDevelopersCode {
                 $processed_tids[$vocab][$node->id()][] = $tid;
               }
             }
+            $processed_tids = array_unique($processed_tids);
             return $processed_tids;
             $term_csv = implode(',', $tids);
             return;
@@ -677,7 +699,7 @@ class PreviousDevelopersCode {
             $tid = self::get_term_id($ref, $vocab);
             if (is_numeric($tid)) {
                 $node->{$field}[] = $tid;
-            }    
+            }
           }
         }
         else {
@@ -719,8 +741,8 @@ class PreviousDevelopersCode {
      $termId = self::get_term_id($term, $vid);
      return $termId;
    }
-   
-   
+
+
 
     public static function format_header($header, $contentType)
     {
@@ -758,7 +780,7 @@ class PreviousDevelopersCode {
     */
    public static function get_term_id($termname, $vid)
    {
-        $query = \Drupal::entityQuery('taxonomy_term'); 
+        $query = \Drupal::entityQuery('taxonomy_term');
         $query->condition('vid', $vid); //select the collection
         $query->condition('name', $termname, 'CONTAINS'); //searching the title for a search term
         $term_ids= $query->execute();
@@ -895,7 +917,7 @@ class PreviousDevelopersCode {
 
    /**
     * Get matching nids for given node data by hashkey
-    * 
+    *
     * @param array $data Node data
     * @param string $md5 hashkey value for title, field_link (or field_link_fr), and field_source
     * @return array Matching node IDs
@@ -915,7 +937,7 @@ class PreviousDevelopersCode {
      // \Drupal::logger('QUERYargs')->notice('<pre>' . print_r($testQuery->arguments(), TRUE) . '</pre>');
      $values = array_values($nids);
      return $values;
-     
+
      /*$query = \Drupal::entityQuery('node')
        ->condition('title', $data['title']['value'])
        ->condition('field_source', $data[]
@@ -924,7 +946,7 @@ class PreviousDevelopersCode {
 //       ->condition('field_md5', $md5, 'IN');
 //
 //     $nids = $query->execute();
-//     
+//
 //     if (empty($nids)) {
 //         // Create an object of type Select.
 //        $database = \Drupal::database();
@@ -952,14 +974,14 @@ class PreviousDevelopersCode {
        if (in_array($md5_array, [$md5])) {
          return $nids;
        }
-         
+
      }
      return [];*/
    }
-   
+
    /**
     * Get matching nids for given node data
-    * 
+    *
     * @param array $data Node data
     * @return array Matching node IDs
     */
@@ -983,12 +1005,14 @@ class PreviousDevelopersCode {
        foreach ($data['field_sector'] as $sector) {
          $sectors[] = $sector['target_id'];
        }
+       $sectors[] = array_unique($sectors);
        $query->condition($query->andConditionGroup()->condition('field_sector', $sectors));
      }
      if (isset($data['field_province'])) {
        foreach ($data['field_province'] as $province) {
          $provinces[] = $province['target_id'];
        }
+       $provinces = array_unique($provinces);
        $query->condition($query->andConditionGroup()->condition('field_province', $provinces));
      }
 
@@ -1006,7 +1030,7 @@ class PreviousDevelopersCode {
 
    /**
     * Get errors for record
-    * 
+    *
     * @param array $data Node data
     * @return array Errors
     */
