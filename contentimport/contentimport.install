@@ -62,3 +62,49 @@ function contentimport_update_8001() {
   }
 
 }
+
+
+/**
+ * Set all body formats to rich_text.
+ */
+function contentimport_update_8002() {
+
+  $query = \Drupal::entityQuery('node');
+  $nids_complaint = $query->condition('type', 'complaint_link')
+    ->execute();
+
+  $nids_info = $query->condition('type', 'info_link')
+    ->execute();
+
+  $nids = array_merge($nids_info, $nids_complaint);
+
+  foreach ($nids as $nid) {
+    $node = \Drupal\node\Entity\Node::load($nid);
+    $node->body->format = 'rich_text';
+    if ($node->hasTranslation('fr')) {
+      $nodeFr = $node->getTranslation('fr');
+      $nodeFr->body->format = 'rich_text';
+      \Drupal::messenger()->addMessage('Successfully set body text format as rich_text format for nid: "' . $node->id(), 'notice', TRUE);
+      \Drupal::logger('OCA-automation')->notice('Successfully set body text format as rich_text format for nid=%nid',
+        [
+          '%nid' => $node->id()
+        ]
+      );
+      }
+    else {
+      $nodeArray = $node->toArray();
+      unset($nodeArray['field_province']);
+      unset($nodeArray['field_sector']);
+      $node->addTranslation('fr', $nodeArray);
+      \Drupal::messenger()->addMessage('Successfully added french translation AND set body text format as rich_text format for nid: "' . $node->id(), 'notice', TRUE);
+      \Drupal::logger('OCA-automation')->notice('Successfully added french translation AND set body text format as rich_text format for nid=%nid',
+        [
+          '%nid' => $node->id()
+        ]
+      );
+      
+    }
+    $node->save();
+  }
+
+}
