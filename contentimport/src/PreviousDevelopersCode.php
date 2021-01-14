@@ -134,13 +134,22 @@ class PreviousDevelopersCode {
             $prov_tmp = $data[6/*province*/];
             if (is_string($prov_tmp)) {
               $prov_tmp = trim($prov_tmp);
+              if ($prov_tmp == 0) {
+                $prov_tmp = '';
+              }
               $data[6/*province*/] = str_replace('  ', ' ', $prov_tmp);
+            }
+            else if ($prov_tmp === 0) {
+              $prov_tmp = '';
             }
             // Clean up province value.
             $sect_tmp = $data[7/*sector*/];
             if (is_string($sect_tmp)) {
               $sect_tmp = trim($sect_tmp);
-              $data[7/*sector*/] = str_replace('  ', ' ', $sect_tmp);
+              $sect_tmp = str_replace('  ', ' ', $sect_tmp);
+              $sect_tmp = str_replace('Switching Switching', 'Switching', $sect_tmp);
+              $sect_tmp = str_replace('Serivice', 'Service', $sect_tmp);
+              $data[7/*sector*/] = str_replace('Accesibility', 'Accessibility', $sect_tmp);
             }
             $array_partiel = []; // Réinitialiser.
             // Ajouter validation pour sha ici:
