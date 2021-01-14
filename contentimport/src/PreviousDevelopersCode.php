@@ -77,7 +77,7 @@ class PreviousDevelopersCode {
       // Code for import csv file.
       $mimetype = 1;
       if ($mimetype) {
-        if (($handle = fopen($location, "r")) !== FALSE) {
+        if (file_exists($location) && ($handle = fopen($location, "r")) !== FALSE) {
           $keyIndex = [];
           $index = 0;
           $importHasErrors = false;
@@ -130,22 +130,33 @@ class PreviousDevelopersCode {
                 continue;
               }
             }
-            $dataTemp = $data;
-            foreach($dataTemp as $testValue => $keyTemp) {
-              // Trim.
-              if (is_string($testValue)) {
-                $data[$keyTemp] = trim($testValue);
-              }
-              else {
-                $data[$keyTemp] = $testValue;
-              }
+            // Clean up province value.
+            $prov_tmp = $data[6/*province*/];
+            if (is_string($prov_tmp)) {
+              $prov_tmp = trim($prov_tmp);
+              $data[6/*province*/] = str_replace('  ', ' ', $prov_tmp);
+            }
+            // Clean up province value.
+            $sect_tmp = $data[7/*sector*/];
+            if (is_string($sect_tmp)) {
+              $sect_tmp = trim($sect_tmp);
+              $data[7/*sector*/] = str_replace('  ', ' ', $sect_tmp);
             }
             $array_partiel = []; // Réinitialiser.
             // Ajouter validation pour sha ici:
             $title_check = $data[0/*title*/];
+            if (is_string($title_check)) {
+              $data[0/*title*/] = trim($title_check);
+            }
             $source_check = $data[8/*field_source*/];
+            if (is_string($source_check)) {
+              $data[8] = trim($source_check);
+            }
             $link_check = $data[4/*field_link_info OR field_link_complaint??*/];
-            $data[4] = rtrim($link_check, '/'); // Remove trailing forward slash if it exists. // DATA CLEANING DUE TO INCONSISTENT CSV INPUT DATA.
+            if (is_string($link_check)) {
+              $link_check = trim($link_check);
+              $data[4] = rtrim($link_check, '/'); // Remove trailing forward slash if it exists. // DATA CLEANING DUE TO INCONSISTENT CSV INPUT DATA.
+            }
 
             if (empty($title_check) || empty($source_check) || empty($link_check)) {
                 \Drupal::logger('ERROR')->notice('<pre>title_check OR link_check OR source_check was empty</pre>');
@@ -672,7 +683,9 @@ class PreviousDevelopersCode {
               $tid = $termvalue['target_id'];
               $tids[] = $termvalue['target_id'];
             }
-            $tids = array_unique($tids);
+            if (!empty($tids)) {
+              $tids = array_unique($tids);
+            }
             foreach ($tids as $tid) {
               $result = $entityStorage->getQuery()
                 ->condition($field, $tid, 'IN')
@@ -687,7 +700,9 @@ class PreviousDevelopersCode {
                 $processed_tids[$vocab][$node->id()][] = $tid;
               }
             }
-            $processed_tids = array_unique($processed_tids);
+            if (!empty($processed_tids)) {
+              $processed_tids = array_unique($processed_tids);
+            }
             return $processed_tids;
             $term_csv = implode(',', $tids);
             return;
@@ -839,7 +854,7 @@ class PreviousDevelopersCode {
      $vocabularies = Vocabulary::loadMultiple();
 
      if (!isset($vocabularies[$vid])) {
-       \Drupal\contentimport\Utils::create_voc($vid, $voc);
+       //self::create_voc($vid, $voc);
        \Drupal::messenger()
          ->addError(t('Vocabulary not exists please add the vocabulary and import again'));
      }
@@ -1005,14 +1020,18 @@ class PreviousDevelopersCode {
        foreach ($data['field_sector'] as $sector) {
          $sectors[] = $sector['target_id'];
        }
-       $sectors[] = array_unique($sectors);
+       if (!empty($sectors)) {
+         $sectors = array_unique($sectors);
+       }
        $query->condition($query->andConditionGroup()->condition('field_sector', $sectors));
      }
      if (isset($data['field_province'])) {
        foreach ($data['field_province'] as $province) {
          $provinces[] = $province['target_id'];
        }
-       $provinces = array_unique($provinces);
+       if (!empty($provinces)) {
+         $provinces = array_unique($provinces);
+       }
        $query->condition($query->andConditionGroup()->condition('field_province', $provinces));
      }
 
