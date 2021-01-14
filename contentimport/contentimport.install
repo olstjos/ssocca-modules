@@ -1,0 +1,64 @@
+<?php
+
+/**
+ * @file
+ * Install, update and uninstall functions for the ISED CCH Content Import module.
+ */
+
+/**
+ * Implements hook_install().
+ */
+function contentimport_install() {
+//  \Drupal::messenger()->addStatus(__FUNCTION__);
+}
+
+/**
+ * Implements hook_uninstall().
+ */
+function contentimport_uninstall() {
+//  \Drupal::messenger()->addStatus(__FUNCTION__);
+}
+
+
+/**
+ * Ensure that all complaint_link and info_link content types have a translation.
+ * Ensure that if province is empty that it selects all values.
+ */
+function contentimport_update_8001() {
+
+  $query = \Drupal::entityQuery('node');
+  $nids_complaint = $query->condition('type', 'complaint_link')
+    ->notExists('field_province')
+    ->execute();
+
+  $nids_info = $query->condition('type', 'info_link')
+    ->notExists('field_province')
+    ->execute();
+
+  $nids = array_merge($nids_info, $nids_complaint);
+
+  foreach ($nids as $nid) {
+    $node = \Drupal\node\Entity\Node::load($nid);
+    $node->set('field_province', [4,5,6,7,8,9,10,11,12,13,14,15,16]);
+    if (!$node->hasTranslation('fr')) {
+      $nodeArray = $node->toArray();
+      unset($nodeArray['field_province']);
+      unset($nodeArray['field_sector']);
+      $node->addTranslation('fr', $nodeArray);
+      \Drupal::messenger()->addMessage('Successfully added translation for nid: "' . $node->id(), 'notice', TRUE);
+      \Drupal::logger('OCA-automation')->notice('Successfully added translation for nid=%nid',
+        [
+         '%nid' => $node->id()
+        ]
+      );
+    }
+    \Drupal::messenger()->addMessage('Successfully added provinces for nid: "' . $node->id(), 'notice', TRUE);
+    \Drupal::logger('OCA-automation')->notice('Successfully added provinces for nid=%nid',
+      [
+        '%nid' => $node->id()
+        ]
+    );
+    $node->save();
+  }
+
+}
