@@ -108,3 +108,43 @@ function contentimport_update_8002() {
   }
 
 }
+
+/**
+ * Undo previous update.
+ * Ensure that if all provinces selected that none are selected.
+ */
+function contentimport_update_8003() {
+
+  $query = \Drupal::entityQuery('node');
+  $nids_complaint = $query->condition('type', 'complaint_link')
+    ->condition('field_province', [4,5,6,7,8,9,10,11,12,13,14,15,16], 'IN' )
+    ->execute();
+
+  $nids_info = $query->condition('type', 'info_link')
+    ->condition('field_province', [4,5,6,7,8,9,10,11,12,13,14,15,16], 'IN' )
+    ->execute();
+
+  $nids = array_merge($nids_info, $nids_complaint);
+
+  $count = count($nids);
+    \Drupal::messenger()->addMessage('found this many nids: "' . $count, 'notice', TRUE);
+    \Drupal::logger('OCA-automation')->notice('found this many nids:%nids',
+      [
+        '%nids' => $count
+        ]
+    );
+  foreach ($nids as $nid) {
+    $node = \Drupal\node\Entity\Node::load($nid);
+    $node->set('field_province', []);
+    \Drupal::messenger()->addMessage('Successfully removed provinces for nid: "' . $node->id(), 'notice', TRUE);
+    \Drupal::logger('OCA-automation')->notice('Successfully removed provinces for nid=%nid',
+      [
+        '%nid' => $node->id()
+        ]
+    );
+    $node->save();
+  }
+
+}
+
+
