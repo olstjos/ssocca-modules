@@ -5,3 +5,5 @@ core: 8.x
 package: Custom
 dependencies:
   - drupal:block
+  - block_visibility_groups
+  - entity_translation_unified_form
