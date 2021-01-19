@@ -116,23 +116,106 @@ function contentimport_update_8002() {
 function contentimport_update_8003() {
 
   $query = \Drupal::entityQuery('node');
-  $nids_complaint = $query->condition('type', 'complaint_link')
-    ->condition('field_province', [4,5,6,7,8,9,10,11,12,13,14,15,16], 'IN' )
-    ->execute();
-
-  $nids_info = $query->condition('type', 'info_link')
-    ->condition('field_province', [4,5,6,7,8,9,10,11,12,13,14,15,16], 'IN' )
-    ->execute();
-
-  $nids = array_merge($nids_info, $nids_complaint);
-
-  $count = count($nids);
+  $query->condition('type', 'complaint_link')
+    ->condition('field_province', 4);
+    $and = $query->andConditionGroup();
+    $and->condition('field_province', 5);
+    $query->condition($and);
+    $and = $query->andConditionGroup();
+    $and->condition('field_province', 6);
+    $query->condition($and);
+    $and = $query->andConditionGroup();
+    $and->condition('field_province', 7);
+    $query->condition($and);
+    $and = $query->andConditionGroup();
+    $and->condition('field_province', 8);
+    $query->condition($and);
+    $and = $query->andConditionGroup();
+    $and->condition('field_province', 9);
+    $query->condition($and);
+    $and = $query->andConditionGroup();
+    $and->condition('field_province', 10);
+    $query->condition($and);
+    $and = $query->andConditionGroup();
+    $and->condition('field_province', 11);
+    $query->condition($and);
+    $and = $query->andConditionGroup();
+    $and->condition('field_province', 12);
+    $query->condition($and);
+    $and = $query->andConditionGroup();
+    $and->condition('field_province', 13);
+    $query->condition($and);
+    $and = $query->andConditionGroup();
+    $and->condition('field_province', 14);
+    $query->condition($and);
+    $and = $query->andConditionGroup();
+    $and->condition('field_province', 15);
+    $query->condition($and);
+    $and = $query->andConditionGroup();
+    $and->condition('field_province', 16);
+    $query->condition($and);
+  $nids_complaint = $query->execute();
+  $count = count($nids_complaint);
     \Drupal::messenger()->addMessage('found this many nids: "' . $count, 'notice', TRUE);
     \Drupal::logger('OCA-automation')->notice('found this many nids:%nids',
       [
         '%nids' => $count
         ]
     );
+
+  $query = \Drupal::entityQuery('node');
+  $query = $query->condition('type', 'info_link')
+    ->condition('field_province', 4);
+    //->execute();
+    $and = $query->andConditionGroup();
+    $and->condition('field_province', 5);
+    $query->condition($and);
+    $and = $query->andConditionGroup();
+    $and->condition('field_province', 6);
+    $query->condition($and);
+    $and = $query->andConditionGroup();
+    $and->condition('field_province', 7);
+    $query->condition($and);
+    $and = $query->andConditionGroup();
+    $and->condition('field_province', 8);
+    $query->condition($and);
+    $and = $query->andConditionGroup();
+    $and->condition('field_province', 9);
+    $query->condition($and);
+    $and = $query->andConditionGroup();
+    $and->condition('field_province', 10);
+    $query->condition($and);
+    $and = $query->andConditionGroup();
+    $and->condition('field_province', 11);
+    $query->condition($and);
+    $and = $query->andConditionGroup();
+    $and->condition('field_province', 12);
+    $query->condition($and);
+    $and = $query->andConditionGroup();
+    $and->condition('field_province', 13);
+    $query->condition($and);
+    $and = $query->andConditionGroup();
+    $and->condition('field_province', 14);
+    $query->condition($and);
+    $and = $query->andConditionGroup();
+    $and->condition('field_province', 15);
+    $query->condition($and);
+    $and = $query->andConditionGroup();
+    $and->condition('field_province', 16);
+    $query->condition($and);
+  $nids_info = $query->execute();
+
+  $count = count($nids_info);
+    \Drupal::messenger()->addMessage('found this many nids: "' . $count, 'notice', TRUE);
+    \Drupal::logger('OCA-automation')->notice('found this many nids:%nids',
+      [
+        '%nids' => $count
+        ]
+    );
+
+  $nids = array_merge($nids_info, $nids_complaint);
+  $count = count($nids);
+
   foreach ($nids as $nid) {
     $node = \Drupal\node\Entity\Node::load($nid);
     $node->set('field_province', []);
