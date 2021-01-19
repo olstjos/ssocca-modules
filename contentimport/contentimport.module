@@ -243,8 +243,10 @@ function process_field($data, $keyIndex, $fieldSettings, $fieldType, $fieldName,
  */
 function contentimport_cron()
 {
-  PreviousDevelopersCode::create_node('public://import.csv', 'complaint_link');
-  PreviousDevelopersCode::create_node('public://import.csv', 'info_link');
+  $message = t('Import is disabled, contact Joseph if you think you should enable this OR if you get tired of this warning then please uninstall the contentimport module.');
+  \Drupal::messenger()->addWarning($message);
+//  PreviousDevelopersCode::create_node('public://import.csv', 'complaint_link');
+//  PreviousDevelopersCode::create_node('public://import.csv', 'info_link');
 }
 
 
