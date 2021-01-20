@@ -124,7 +124,7 @@ class SectorSearchBlock extends BlockBase implements ContainerFactoryPluginInter
     }
 
     $mark = implode('', $markup);
-    $sectorHtml = '<h3 class="wb-inv">
+    $sectorHtml = '<h3 id="explore-consumer-hub" class="wb-inv">
   Explore categories
 </h3>
 <ul class="list-inline menu small" role="menubar">' . $mark . '</ul>';

@@ -37,9 +37,14 @@ class SubsectorBlock extends BlockBase{
       $vid = 'sector';
       $child_terms = \Drupal::entityTypeManager()->getStorage('taxonomy_term')->loadTree($vid, $tid, 1, FALSE);
       foreach ($child_terms as $key => $child_term) {
+          $langcode = \Drupal::languageManager()->getCurrentLanguage()->getId();
           $term_detail[$key]['label'] = $child_term->name;
           $term_detail[$key]['tid'] = $child_term->tid;
           $term_obj = \Drupal::entityTypeManager()->getStorage('taxonomy_term')->load($child_term->tid);
+          if ($langcode != 'en') {
+            $term_obj = $term_obj->getTranslation($langcode);
+            $term_detail[$key]['label'] = $term_obj->label();
+          }
           $term_detail[$key]['provincial'] = $term_obj->get('field_provincial')->value;
           if(isset($term_obj->get('field_image_sector')->entity)){
             $term_detail[$key]['image'] = file_create_url($term_obj->get('field_image_sector')->entity->getFileUri());
