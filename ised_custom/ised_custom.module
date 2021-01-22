@@ -97,3 +97,45 @@ function ised_custom_views_query_alter(Drupal\views\ViewExecutable $view, Drupal
     */
   }
 }
+
+/**
+ * Implements hook_form_TAG_form_alter.
+ * If the sector is NOT provincial the filter by province should NOT be displayed.
+ * Replace the - All - label with 'All provinces and territories' / 'Toutes les provinces et territoires'. 
+ **/
+function ised_custom_form_views_exposed_form_alter(&$form, \Drupal\Core\Form\FormStateInterface $form_state, $form_id) {
+  if ($form_id == 'views_exposed_form') {
+    $current_route = \Drupal::routeMatch()->getRouteName();
+    if ($current_route == 'view.sector_browse.page_2') {
+      $path = \Drupal::request()->getpathInfo();
+      $arg  = explode('/',$path);
+      if (isset($arg[5]) && is_numeric($arg[5])) {
+        $tid = $arg[5];
+      }
+      else {
+        // This throws a warning for some reason, but is a good fallback.
+        $tid = \Drupal::request()->get('arg_0');
+      }
+      if (is_numeric($tid)) {
+        if (isset($form['tid'])) {
+          $term = \Drupal\taxonomy\Entity\Term::load($tid);
+          if (is_object($term) && !$term->get('field_provincial')->value) {
+            $form['#disabled'] = TRUE;
+            $form['#attributes']['class'][] = 'hidden';
+          }
+
+          $form['tid']['#options']['All'] = t('All Provinces and Territories');// Toutes les provinces et territoires.
+          //foreach ($form['tid']['#options'] as $key => &$value) {
+          //}
+        }
+      }
+//      \Drupal::messenger()->addMessage('keys:' . print_r(dump(array_keys($form/*['tid']*/), TRUE)), TRUE);//Very good for debugging.
+      //\Drupal::messenger()->addMessage($current_route . ' term id=' . $tid, TRUE);
+      //\Drupal::messenger()->addMessage('keys:' . print_r(dump($form['tid'], TRUE)), TRUE);
+      //\Drupal::messenger()->addMessage('key:' . $key . ' value:' . $value, TRUE);
+      // $form['#attached']['library'] = 'ised_custom/customlibrary';
+    }
+  }
+}
+
+
