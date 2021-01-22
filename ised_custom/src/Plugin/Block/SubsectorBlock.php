@@ -42,7 +42,9 @@ class SubsectorBlock extends BlockBase{
           $term_detail[$key]['tid'] = $child_term->tid;
           $term_obj = \Drupal::entityTypeManager()->getStorage('taxonomy_term')->load($child_term->tid);
           if ($langcode != 'en') {
-            $term_obj = $term_obj->getTranslation($langcode);
+            if ($term_obj->hasTranslation($langcode)) {
+              $term_obj = $term_obj->getTranslation($langcode);
+            }
             $term_detail[$key]['label'] = $term_obj->label();
           }
           $term_detail[$key]['provincial'] = $term_obj->get('field_provincial')->value;
