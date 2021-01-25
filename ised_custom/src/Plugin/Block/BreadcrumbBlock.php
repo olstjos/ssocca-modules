@@ -36,14 +36,20 @@ class BreadcrumbBlock extends BlockBase{
     $list_tids=[];
     foreach ($ancestors as $term) {
       
-      $list[] = $term->label();
+      if ($term->hasTranslation($language)) {
+        $termTranslation = $term->getTranslation($language);
+        $list[] = $termTranslation->label();
+      }
+      else {
+        $list[] = $term->label();
+      }
       $list_tids[]=$term->id();
     }
   $markup='';
     if(count($list) ==1){
       $markup='<nav property="breadcrumb" aria-label="breadcrumb" role="navigation">
       <ol class="breadcrumb">
-        <li class="breadcrumb-item"><a href="/">Start</a></li>
+        <li class="breadcrumb-item"><a href="/">' . t('Start') . '</a></li>
         <li class="breadcrumb-item active" aria-current="page">'.$list[0].'</li>
       </ol>
     </nav>';
@@ -52,7 +58,7 @@ class BreadcrumbBlock extends BlockBase{
     else if(count($list) ==2){
       $markup ='<nav property="breadcrumb" aria-label="breadcrumb" role="navigation">
       <ol class="breadcrumb">
-        <li class="breadcrumb-item"><a href="/">Start</a></li>
+        <li class="breadcrumb-item"><a href="/">' . t('Start') . '</a></li>
         <li class="breadcrumb-item"><a href="/'.$language.'/sector/term/'.$list_tids[1].'">'.$list[1].'</a></li>
         <li class="breadcrumb-item active" aria-current="page">'.$list[0].'</li>
       </ol>
@@ -62,7 +68,7 @@ class BreadcrumbBlock extends BlockBase{
     else if(count($list) ==3){
       $markup ='<nav property="breadcrumb" aria-label="breadcrumb" role="navigation">
       <ol class="breadcrumb">
-        <li class="breadcrumb-item"><a href="#">Start</a></li>
+        <li class="breadcrumb-item"><a href="#">' . t('Start') . '</a></li>
         <li class="breadcrumb-item"><a href="/'.$language.'/sector/term/'.$list_tids[2].'">'.$list[2].'</a></li>
         <li class="breadcrumb-item"><a href="/'.$language.'/sector/term/'.$list_tids[1].'">'.$list[1].'</a></li>
         <li class="breadcrumb-item active" aria-current="page">'.$list[0].'</li>
@@ -73,7 +79,7 @@ class BreadcrumbBlock extends BlockBase{
     else if(count($list) ==4){
       $markup ='<nav property="breadcrumb" aria-label="breadcrumb" role="navigation">
       <ol class="breadcrumb">
-        <li class="breadcrumb-item"><a href="#">Start</a></li>
+        <li class="breadcrumb-item"><a href="#">' . t('Start') . '</a></li>
         <li class="breadcrumb-item"><a href="/'.$language.'/sector/term/'.$list_tids[3].'">'.$list[3].'</a></li>
         <li class="breadcrumb-item"><a href="/'.$language.'/sector/term/'.$list_tids[2].'">'.$list[2].'</a></li>
         <li class="breadcrumb-item"><a href="/'.$language.'/sector/term/'.$list_tids[1].'">'.$list[1].'</a></li>
