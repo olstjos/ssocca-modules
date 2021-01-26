@@ -118,14 +118,14 @@ function ised_custom_system_breadcrumb_alter(\Drupal\Core\Breadcrumb\Breadcrumb 
         $breadcrumb = new Breadcrumb();
         $breadcrumb->setLinks($breadcrumb_links);
 
-        $tid = OcaHelper::getTidFromPathParam();
-        $label = OcaHelper::getLabelFromTid($tid, $language);
-        if (is_string($label)) {
-          $urlNone = Url::fromRoute('<none>');
-          $termLink = \Drupal\Core\Link::fromTextAndUrl($label, $urlNone);
-          $breadcrumb->addLink($termLink);
-        }
-        $breadcrumb_links = $breadcrumb->getLinks();
+//        $tid = OcaHelper::getTidFromPathParam();
+//        $label = OcaHelper::getLabelFromTid($tid, $language);
+//        if (is_string($label)) {
+//          $urlNone = Url::fromRoute('<none>');
+//          $termLink = \Drupal\Core\Link::fromTextAndUrl($label, $urlNone);
+//          $breadcrumb->addLink($termLink);
+//        }
+//        $breadcrumb_links = $breadcrumb->getLinks();
       }
 
     } else if ($route_name == 'search.view_node_search') {
