@@ -28,6 +28,7 @@ class CchSearchForm extends FormBase {
    * {@inheritdoc}
    */
   public function buildForm(array $form, FormStateInterface $form_state) {
+    $langcode = \Drupal::languageManager()->getCurrentLanguage()->getId();
     $op = \Drupal::request()->query->get('op');
     $keywords = $op == t('Clear') ? '':\Drupal::request()->query->get('keys');
     $sector = $op == t('Clear') ? '':\Drupal::request()->query->get('search_sector');
@@ -36,31 +37,60 @@ class CchSearchForm extends FormBase {
     $sector_tid = \Drupal::request()->query->get('search_sector');
     $province_tid = \Drupal::request()->query->get('search_province');
     
-    if($sector_tid){
+    if ($sector_tid) {
       $term = \Drupal\taxonomy\Entity\Term::load($sector_tid); 
-     $sectorTermData[$term->id()] = $term->label();
+      if ($langcode != 'en') {
+        if ($term->hasTranslation($langcode)) {
+          $term = $term->getTranslation($langcode);
+        }
+      }
+      $sectorTermData[$term->id()] = $term->label();
     }
-    else{
+    else {
       // Load sectors
-      $sectorTerms =\Drupal::entityTypeManager()->getStorage('taxonomy_term')->loadTree('sector');
+      $sectorTerms = \Drupal::entityTypeManager()->getStorage('taxonomy_term')->loadTree('sector');
       $sectorTermData = ['' => (string)t('Select a Sector')];
+
       foreach ($sectorTerms as $term) {
-        $sectorTermData[$term->tid] = $term->name;
+        if ($langcode != 'en') {
+          $term = \Drupal\taxonomy\Entity\Term::load($term->tid); 
+          if ($term->hasTranslation($langcode)) {
+            $term = $term->getTranslation($langcode);
+          }
+          $sectorTermData[$term->id()] = $term->label();
+        }
+        else {
+          $sectorTermData[$term->tid] = $term->name;
+        }
       }
     
     }
 
-    if($province_tid){
+    if ($province_tid) {
       $term = \Drupal\taxonomy\Entity\Term::load($province_tid); 
+      if ($langcode != 'en') {
+        if ($term->hasTranslation($langcode)) {
+          $term = $term->getTranslation($langcode);
+        }
+      }
       $provinceTermData[$term->id()] = $term->label();
 
     }
-    else{
+    else {
       // Load provinces
       $provinceTerms =\Drupal::entityTypeManager()->getStorage('taxonomy_term')->loadTree('province');
       $provinceTermData = ['' => (string)t('Select a Province')];
       foreach ($provinceTerms as $term) {
-        $provinceTermData[$term->tid] = $term->name;
+        if ($langcode != 'en') {
+          $term = \Drupal\taxonomy\Entity\Term::load($term->tid); 
+          if ($term->hasTranslation($langcode)) {
+            $term = $term->getTranslation($langcode);
+          }
+          $provinceTermData[$term->id()] = $term->label();
+        }
+        else {
+          $provinceTermData[$term->tid] = $term->name;
+        }
       }
     }
   
