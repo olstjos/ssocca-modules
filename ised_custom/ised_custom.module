@@ -108,7 +108,10 @@ function ised_custom_system_breadcrumb_alter(\Drupal\Core\Breadcrumb\Breadcrumb 
       if ($breadcrumb_links[1]->getText() == 'Results' || $breadcrumb_links[1]->getText() == 'Résultats') {
         $resultsUrl = $breadcrumb_links[1]->getUrl();
         $resultsLink = \Drupal\Core\Link::fromTextAndUrl(t('Results'), $resultsUrl);
-        $breadcrumb->addLink($resultsLink);
+        $urlNone = Url::fromRoute('<none>');
+        $exploreResultsLink = \Drupal\Core\Link::fromTextAndUrl(t('Explore Categories'), $urlNone);
+        //$breadcrumb->addLink($resultsLink);
+        $breadcrumb->addLink($exploreResultsLink);
         $breadcrumb_links = $breadcrumb->getLinks();
         unset($breadcrumb_links[1]);
         unset($breadcrumb_links[0]);
