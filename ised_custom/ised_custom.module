@@ -5,8 +5,9 @@
  * Module file for ISED_Custom
  */
 
-use Drupal\Core\Database\Query\AlterableInterface;
-use Drupal\Core\Url;
+use \Drupal\Core\Database\Query\AlterableInterface;
+use \Drupal\Core\Url;
+use Drupal\ised_custom\OcaHelper;
 use \Drupal\Core\Breadcrumb\Breadcrumb;
 
 /**
@@ -101,30 +102,52 @@ function ised_custom_system_breadcrumb_alter(\Drupal\Core\Breadcrumb\Breadcrumb 
   if ($breadcrumb && !\Drupal::service('router.admin_context')->isAdminRoute()) {
 
     if ($route_name == 'view.sector_browse.page_2') {
-      $breadcrumb_links[0]->setText(t('Canadian Consumer Hub'));
-      $url = Url::fromRoute('<front>');
-      $breadcrumb_links[0]->setUrl($url);
+      $hubUrl = Url::fromRoute('<front>');
+      $hubLink = \Drupal\Core\Link::fromTextAndUrl(t('Canadian Consumer Hub'), $hubUrl);
+      $breadcrumb->addLink($hubLink);
+      if ($breadcrumb_links[1]->getText() == 'Results' || $breadcrumb_links[1]->getText() == 'Résultats') {
+        $resultsUrl = $breadcrumb_links[1]->getUrl();
+        $resultsLink = \Drupal\Core\Link::fromTextAndUrl(t('Results'), $resultsUrl);
+        $breadcrumb->addLink($resultsLink);
+        $breadcrumb_links = $breadcrumb->getLinks();
+        unset($breadcrumb_links[1]);
+        unset($breadcrumb_links[0]);
+        $breadcrumb = new Breadcrumb();
+        $breadcrumb->setLinks($breadcrumb_links);
 
-      $breadcrumb_links[1]->setText(t('Results'));
-      $url2 = Url::fromRoute('<none>');
-      $breadcrumb_links[1]->setUrl($url2);
+        $tid = OcaHelper::getTidFromPathParam();
+        $label = OcaHelper::getLabelFromTid($tid, $language);
+        if (is_string($label)) {
+          $urlNone = Url::fromRoute('<none>');
+          $termLink = \Drupal\Core\Link::fromTextAndUrl($label, $urlNone);
+          $breadcrumb->addLink($termLink);
+        }
+        $breadcrumb_links = $breadcrumb->getLinks();
+      }
+
     } else if ($route_name == 'search.view_node_search') {
+      $hubUrl = Url::fromRoute('<front>');
+      $hubLink = \Drupal\Core\Link::fromTextAndUrl(t('Canadian Consumer Hub'), $hubUrl);
+      $breadcrumb->addLink($hubLink);
 
-      $breadcrumb_links[0]->setText(t('Canadian Consumer Hub'));
-      $url = Url::fromRoute('<front>');
-      $breadcrumb_links[0]->setUrl($url);
-      unset($breadcrumb_links[1]);
-      $breadcrumb = new Breadcrumb();
-      $breadcrumb->setLinks($breadcrumb_links);
     } else if ($route_name == 'view.sector_browse.page_1') {
-      $breadcrumb_links[0]->setText(t('Canadian Consumer Hub'));
-      $url = Url::fromRoute('<front>');
-      $breadcrumb_links[0]->setUrl($url);
+      $hubUrl = Url::fromRoute('<front>');
+      $hubLink = \Drupal\Core\Link::fromTextAndUrl(t('Canadian Consumer Hub'), $hubUrl);
+      $breadcrumb->addLink($hubLink);
 
       $breadcrumb->addLink(\Drupal\Core\Link::createFromRoute(t('Explore categories'), '<none>'));
     }
+    if (isset($breadcrumb_links[0])) {
+      if ($breadcrumb_links[0]->getText() == 'Home' || $breadcrumb_links[0]->getText() == 'Accueil') {
+        $breadcrumb_links = $breadcrumb->getLinks();
+        unset($breadcrumb_links[0]);
+        $breadcrumb = new Breadcrumb();
+        $breadcrumb->setLinks($breadcrumb_links);
+      }
+    }
   }
 }
+
 
 function ised_custom_views_query_alter(Drupal\views\ViewExecutable $view, Drupal\views\Plugin\views\query\Sql $query)
 {
@@ -139,7 +162,7 @@ function ised_custom_views_query_alter(Drupal\views\ViewExecutable $view, Drupal
 /**
  * Implements hook_form_TAG_form_alter.
  * If the sector is NOT provincial the filter by province should NOT be displayed.
- * Replace the - All - label with 'All provinces and territories' / 'Toutes les provinces et territoires'. 
+ * Replace the - All - label with 'All provinces and territories' / 'Toutes les provinces et territoires'.
  **/
 function ised_custom_form_views_exposed_form_alter(&$form, \Drupal\Core\Form\FormStateInterface $form_state, $form_id) {
   if ($form_id == 'views_exposed_form') {
