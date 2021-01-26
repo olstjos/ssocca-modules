@@ -56,9 +56,47 @@ function ised_custom_theme($existing, $type, $theme, $path)
 function ised_custom_system_breadcrumb_alter(\Drupal\Core\Breadcrumb\Breadcrumb &$breadcrumb, \Drupal\Core\Routing\RouteMatchInterface $route_match, array $context)
 {
 
-  $route_name = \Drupal::routeMatch()->getRouteName();
-  $breadcrumb_links = $breadcrumb->getLinks();
   $language = \Drupal::languageManager()->getCurrentLanguage()->getId();
+  $route_name = \Drupal::routeMatch()->getRouteName();
+
+  $UrlCanada = \Drupal\Core\Url::fromUri('https://www.canada.ca/' . $language);
+  $LinkCanada = \Drupal\Core\Link::fromTextAndUrl('Canada.ca', $UrlCanada);
+  $breadcrumb->addLink($LinkCanada);
+  $breadcrumb_links = $breadcrumb->getLinks();
+  $countLinks = count($breadcrumb_links);
+  if ($countLinks > 0) {
+    $lastvalue = end($breadcrumb_links);
+    $lastkey = key($breadcrumb_links);
+
+    $new_breadcrumb = array($lastkey=>$lastvalue);
+
+    array_pop($breadcrumb_links);
+
+    $breadcrumb_links = array_merge($new_breadcrumb,$breadcrumb_links);
+  }
+  $breadcrumb_links = $breadcrumb->getLinks();
+
+
+  $UrlConsumerAffaires = \Drupal\Core\Url::fromUri('https://ic.gc.ca/eic/site/oca-bc.nsf/eng/h_ca00000.html');
+  $LinkConsumerAffaires = \Drupal\Core\Link::fromTextAndUrl('Office of Consumer Affairs', $UrlConsumerAffaires);
+  if ($language != 'en') {
+    $UrlConsumerAffaires = \Drupal\Core\Url::fromUri('https://ic.gc.ca/eic/site/oca-bc.nsf/fra/h_ca00000.html');
+    $LinkConsumerAffaires = \Drupal\Core\Link::fromTextAndUrl('Bureau de la consommation', $UrlConsumerAffaires);
+  }
+  $breadcrumb->addLink($LinkConsumerAffaires);
+  $breadcrumb_links = $breadcrumb->getLinks();
+  $countLinks = count($breadcrumb_links);
+  if ($countLinks > 0) {
+    $lastvalue = end($breadcrumb_links);
+    $lastkey = key($breadcrumb_links);
+
+    $new_breadcrumb = array($lastkey=>$lastvalue);
+
+    array_pop($breadcrumb_links);
+
+    $breadcrumb_links = array_merge($new_breadcrumb,$breadcrumb_links);
+  }
+  $breadcrumb_links = $breadcrumb->getLinks();
 
   if ($breadcrumb && !\Drupal::service('router.admin_context')->isAdminRoute()) {
 
