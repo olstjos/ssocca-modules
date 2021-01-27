@@ -140,6 +140,6 @@ class CchSearchForm extends FormBase {
    */
 
   public function submitForm(array &$form, FormStateInterface $form_state) {
-    \Drupal::messenger()->addMessage('keys:' . print_r(dump(array_keys($form/*['tid']*/), TRUE)), TRUE);//Very good for debugging
+    //\Drupal::messenger()->addMessage('keys:' . print_r(dump(array_keys($form/*['tid']*/), TRUE)), TRUE);//Very good for debugging
   }
 }
