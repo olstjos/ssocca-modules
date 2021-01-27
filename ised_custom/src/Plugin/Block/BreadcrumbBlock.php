@@ -68,7 +68,7 @@ class BreadcrumbBlock extends BlockBase{
     else if(count($list) ==3){
       $markup ='<nav property="breadcrumb" aria-label="breadcrumb" role="navigation">
       <ol class="breadcrumb">
-        <li class="breadcrumb-item"><a href="#">' . t('Start') . '</a></li>
+        <li class="breadcrumb-item"><a href="/">' . t('Start') . '</a></li>
         <li class="breadcrumb-item"><a href="/'.$language.'/sector/term/'.$list_tids[2].'">'.$list[2].'</a></li>
         <li class="breadcrumb-item"><a href="/'.$language.'/sector/term/'.$list_tids[1].'">'.$list[1].'</a></li>
         <li class="breadcrumb-item active" aria-current="page">'.$list[0].'</li>
@@ -79,7 +79,7 @@ class BreadcrumbBlock extends BlockBase{
     else if(count($list) ==4){
       $markup ='<nav property="breadcrumb" aria-label="breadcrumb" role="navigation">
       <ol class="breadcrumb">
-        <li class="breadcrumb-item"><a href="#">' . t('Start') . '</a></li>
+        <li class="breadcrumb-item"><a href="/">' . t('Start') . '</a></li>
         <li class="breadcrumb-item"><a href="/'.$language.'/sector/term/'.$list_tids[3].'">'.$list[3].'</a></li>
         <li class="breadcrumb-item"><a href="/'.$language.'/sector/term/'.$list_tids[2].'">'.$list[2].'</a></li>
         <li class="breadcrumb-item"><a href="/'.$language.'/sector/term/'.$list_tids[1].'">'.$list[1].'</a></li>
@@ -94,7 +94,8 @@ class BreadcrumbBlock extends BlockBase{
     
     return [
       '#markup' => $markup,
-      '#cache'=>['max-age'=>0,],
+      '#cache' => ['contexts' => ['url.path']], // Improves performance.
+      // '#cache'=>['max-age'=>0,],
     ];
   }
 

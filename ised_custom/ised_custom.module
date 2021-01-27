@@ -59,10 +59,27 @@ function ised_custom_system_breadcrumb_alter(\Drupal\Core\Breadcrumb\Breadcrumb 
 
   $language = \Drupal::languageManager()->getCurrentLanguage()->getId();
   $route_name = \Drupal::routeMatch()->getRouteName();
+  $breadcrumb_links = $breadcrumb->getLinks();
+  $idx = 0;
+  foreach ($breadcrumb_links as $breadcrumb_item => $key) {
+    if (!is_null($breadcrumb_links[$idx])) {
+      if ($breadcrumb_links[$idx]->getText() == 'Home' || $breadcrumb_links[$idx]->getText() == 'Accueil') {
+        $breadcrumb_links = $breadcrumb->getLinks();
+        unset($breadcrumb_links[$idx]);
+        $breadcrumb = new Breadcrumb();
+        $breadcrumb->setLinks($breadcrumb_links);
+        break; // Only expect one 'Home'
+      }
+    }
+    $idx++;
+  }
+  $breadcrumb_links = $breadcrumb->getLinks();
 
-  $UrlCanada = \Drupal\Core\Url::fromUri('https://www.canada.ca/' . $language);
-  $LinkCanada = \Drupal\Core\Link::fromTextAndUrl('Canada.ca', $UrlCanada);
-  $breadcrumb->addLink($LinkCanada);
+
+  // Canadian Consumer Hub.
+  $hubUrl = Url::fromRoute('<front>');
+  $hubLink = \Drupal\Core\Link::fromTextAndUrl(t('Canadian Consumer Hub'), $hubUrl);
+  $breadcrumb->addLink($hubLink);
   $breadcrumb_links = $breadcrumb->getLinks();
   $countLinks = count($breadcrumb_links);
   if ($countLinks > 0) {
@@ -74,10 +91,14 @@ function ised_custom_system_breadcrumb_alter(\Drupal\Core\Breadcrumb\Breadcrumb 
     array_pop($breadcrumb_links);
 
     $breadcrumb_links = array_merge($new_breadcrumb,$breadcrumb_links);
+    $breadcrumb = new Breadcrumb();
+    $breadcrumb->setLinks($breadcrumb_links);
   }
+  // End section.
   $breadcrumb_links = $breadcrumb->getLinks();
 
 
+  // Office of Consumer Affairs.
   $UrlConsumerAffaires = \Drupal\Core\Url::fromUri('https://ic.gc.ca/eic/site/oca-bc.nsf/eng/h_ca00000.html');
   $LinkConsumerAffaires = \Drupal\Core\Link::fromTextAndUrl('Office of Consumer Affairs', $UrlConsumerAffaires);
   if ($language != 'en') {
@@ -96,21 +117,43 @@ function ised_custom_system_breadcrumb_alter(\Drupal\Core\Breadcrumb\Breadcrumb 
     array_pop($breadcrumb_links);
 
     $breadcrumb_links = array_merge($new_breadcrumb,$breadcrumb_links);
+    $breadcrumb = new Breadcrumb();
+    $breadcrumb->setLinks($breadcrumb_links);
   }
+  // End section.
   $breadcrumb_links = $breadcrumb->getLinks();
+
+
+  // Canada.ca
+  $UrlCanada = \Drupal\Core\Url::fromUri('https://www.canada.ca/' . $language);
+  $LinkCanada = \Drupal\Core\Link::fromTextAndUrl('Canada.ca', $UrlCanada);
+  $breadcrumb->addLink($LinkCanada);
+  $breadcrumb_links = $breadcrumb->getLinks();
+  $countLinks = count($breadcrumb_links);
+  if ($countLinks > 0) {
+    $lastvalue = end($breadcrumb_links);
+    $lastkey = key($breadcrumb_links);
+
+    $new_breadcrumb = array($lastkey=>$lastvalue);
+
+    array_pop($breadcrumb_links);
+
+    $breadcrumb_links = array_merge($new_breadcrumb,$breadcrumb_links);
+    $breadcrumb = new Breadcrumb();
+    $breadcrumb->setLinks($breadcrumb_links);
+  }
+  // End section.
+  $breadcrumb_links = $breadcrumb->getLinks();
+
+
 
   if ($breadcrumb && !\Drupal::service('router.admin_context')->isAdminRoute()) {
 
     if ($route_name == 'view.sector_browse.page_2') {
-      $hubUrl = Url::fromRoute('<front>');
-      $hubLink = \Drupal\Core\Link::fromTextAndUrl(t('Canadian Consumer Hub'), $hubUrl);
-      $breadcrumb->addLink($hubLink);
       if ($breadcrumb_links[1]->getText() == 'Results' || $breadcrumb_links[1]->getText() == 'Résultats') {
         $resultsUrl = $breadcrumb_links[1]->getUrl();
-        $resultsLink = \Drupal\Core\Link::fromTextAndUrl(t('Results'), $resultsUrl);
         $urlNone = Url::fromRoute('<none>');
         $exploreResultsLink = \Drupal\Core\Link::fromTextAndUrl(t('Explore Categories'), $urlNone);
-        //$breadcrumb->addLink($resultsLink);
         $breadcrumb->addLink($exploreResultsLink);
         $breadcrumb_links = $breadcrumb->getLinks();
         unset($breadcrumb_links[1]);
@@ -129,24 +172,27 @@ function ised_custom_system_breadcrumb_alter(\Drupal\Core\Breadcrumb\Breadcrumb 
       }
 
     } else if ($route_name == 'search.view_node_search') {
-      $hubUrl = Url::fromRoute('<front>');
-      $hubLink = \Drupal\Core\Link::fromTextAndUrl(t('Canadian Consumer Hub'), $hubUrl);
-      $breadcrumb->addLink($hubLink);
+      //$hubUrl = Url::fromRoute('<front>');
+      //$hubLink = \Drupal\Core\Link::fromTextAndUrl(t('Canadian Consumer Hub'), $hubUrl);
+      //$breadcrumb->addLink($hubLink);
 
     } else if ($route_name == 'view.sector_browse.page_1') {
-      $hubUrl = Url::fromRoute('<front>');
-      $hubLink = \Drupal\Core\Link::fromTextAndUrl(t('Canadian Consumer Hub'), $hubUrl);
-      $breadcrumb->addLink($hubLink);
+      //$hubUrl = Url::fromRoute('<front>');
+      //$hubLink = \Drupal\Core\Link::fromTextAndUrl(t('Canadian Consumer Hub'), $hubUrl);
+      //$breadcrumb->addLink($hubLink);
 
       $breadcrumb->addLink(\Drupal\Core\Link::createFromRoute(t('Explore categories'), '<none>'));
     }
-    if (isset($breadcrumb_links[0])) {
-      if ($breadcrumb_links[0]->getText() == 'Home' || $breadcrumb_links[0]->getText() == 'Accueil') {
-        $breadcrumb_links = $breadcrumb->getLinks();
-        unset($breadcrumb_links[0]);
-        $breadcrumb = new Breadcrumb();
-        $breadcrumb->setLinks($breadcrumb_links);
-      }
+    $breadcrumb_links = $breadcrumb->getLinks();
+  }
+
+  if (count($breadcrumb_links) > 1) {
+    $countLinks = count($breadcrumb_links);
+    if ($breadcrumb_links[$countLinks-1]->getText() == $breadcrumb_links[$countLinks-2]->getText()) {
+      unset($breadcrumb_links[$countLinks-1]);
+      $breadcrumb = new Breadcrumb();
+      $breadcrumb->setLinks($breadcrumb_links);
+      $breadcrumb_links = $breadcrumb->getLinks();
     }
   }
 }
