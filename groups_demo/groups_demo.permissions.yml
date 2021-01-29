@@ -1,0 +1,4 @@
+administer groups_demo configuration:
+  title: 'Administer groups_demo configuration'
+  description: 'Optional description.'
+  restrict access: true

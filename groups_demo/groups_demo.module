@@ -1,0 +1,68 @@
+<?php
+
+/**
+ * @file
+ * Primary module hooks for groups_demo module.
+ *
+ * @DCG
+ * This file is no longer required in Drupal 8.
+ * @see https://www.drupal.org/node/2217931
+ */
+
+use Drupal\user\Entity\User;
+use Drupal\views\ViewExecutable;
+use Drupal\Core\Form\FormStateInterface;
+
+
+/**
+ * Implements groups_demo_views_pre_view hook
+ */
+
+function groups_demo_views_pre_view (ViewExecutable $view, $display_id, $args) {
+  if ( $view->id() != 'content' && $view->id() != 'moderated_content' ) {
+    return;
+  }
+
+  $user_roles = \Drupal::currentUser()->getRoles();
+  if (in_array('transportation', $user_roles)) {
+    $filters = $view->getDisplay()->getOption('filters');
+    $filters['type']['value'] = 'transport_link';
+    $view->display_handler->overrideOption('filters', $filters);
+  }
+    
+  if (in_array('telecommunications', $user_roles)) {
+    $filters = $view->getDisplay()->getOption('filters');
+    $filters['type']['value'] = 'telecom_link';
+    $view->display_handler->overrideOption('filters', $filters);
+  }
+}
+
+/**
+ * Implements groups_demo_form_views_exposed_form_alter hook.
+ */
+
+function groups_demo_form_views_exposed_form_alter(&$form, \Drupal\Core\Form\FormStateInterface $form_state, $form_id) {
+  $view = $form_state->getStorage('view');
+  if ($view['view']->id() != 'content' && $view['view']->id() != 'moderated_content' ) {
+    return;
+  }
+
+  $user_roles = \Drupal::currentUser()->getRoles();
+  if (in_array('telecommunications', $user_roles) && ($form_id == 'views_exposed_form')) {
+    foreach ($form['type']['#options'] as $key => &$value) {
+      if ($key != 'telecom_link') {
+        unset($form['type']['#options'][$key]);
+      }
+    }
+  }
+
+  if (in_array('transportation', $user_roles) && ($form_id == 'views_exposed_form')) {
+    foreach ($form['type']['#options'] as $key => &$value) {
+      if ($key != 'transport_link') {
+        unset($form['type']['#options'][$key]);
+      }
+    }
+  }
+}
+
+

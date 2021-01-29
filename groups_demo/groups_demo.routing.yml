@@ -1,0 +1,15 @@
+groups_demo.example:
+  path: '/groups-demo/example'
+  defaults:
+    _title: 'Example'
+    _controller: '\Drupal\groups_demo\Controller\GroupsDemoController::build'
+  requirements:
+    _permission: 'access content'
+
+groups_demo.settings_form:
+  path: '/admin/config/system/groups-demo'
+  defaults:
+    _title: 'groups_demo settings'
+    _form: 'Drupal\groups_demo\Form\SettingsForm'
+  requirements:
+    _permission: 'administer groups_demo configuration'
