@@ -48,21 +48,21 @@ class CchSearchForm extends FormBase {
     }
     else {
       // Load sectors
-      $sectorTerms = \Drupal::entityTypeManager()->getStorage('taxonomy_term')->loadTree('sector');
-      $sectorTermData = ['' => (string)t('Select a Sector')];
-
-      foreach ($sectorTerms as $term) {
-        if ($langcode != 'en') {
-          $term = \Drupal\taxonomy\Entity\Term::load($term->tid); 
-          if ($term->hasTranslation($langcode)) {
-            $term = $term->getTranslation($langcode);
-          }
-          $sectorTermData[$term->id()] = $term->label();
-        }
-        else {
-          $sectorTermData[$term->tid] = $term->name;
-        }
-      }
+//      $sectorTerms = \Drupal::entityTypeManager()->getStorage('taxonomy_term')->loadTree('sector');
+//      $sectorTermData = ['' => (string)t('Select a Sector')];
+//
+//      foreach ($sectorTerms as $term) {
+//        if ($langcode != 'en') {
+//          $term = \Drupal\taxonomy\Entity\Term::load($term->tid); 
+//          if ($term->hasTranslation($langcode)) {
+//            $term = $term->getTranslation($langcode);
+//          }
+//          $sectorTermData[$term->id()] = $term->label();
+//        }
+//        else {
+//          $sectorTermData[$term->tid] = $term->name;
+//        }
+//      }
     
     }
 
@@ -101,12 +101,15 @@ class CchSearchForm extends FormBase {
       '#value' => $keywords,
       '#required' => false,
     ];
-    $form['search_sector'] = [
-      '#options' => $sectorTermData,
-      '#title' => $this->t('Filter options'),  
-      '#type' => 'select',
-      '#value' => $sector,
-    ];
+// Disable sector (for now)
+//    $form['search_sector'] = [
+//      '#options' => $sectorTermData,
+//      '#title' => $this->t('Filter options'),  
+//      '#type' => 'select',
+//      '#value' => $sector,
+//    ];
+// Re-enable later after some thought.
+
     $form['search_province'] = [
       '#options' => $provinceTermData,
       '#type' => 'select',
