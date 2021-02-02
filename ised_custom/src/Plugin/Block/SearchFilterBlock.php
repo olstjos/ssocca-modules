@@ -86,7 +86,12 @@ class SearchFilterBlock extends BlockBase implements ContainerFactoryPluginInter
   public function build() {
     $form = \Drupal::formBuilder()->getForm('Drupal\ised_custom\Form\CchSearchForm');
 
-    $build = ['form' => $form];
+    $build = [
+      'form' => $form,
+      '#cache' => [
+        'max-age' => 0,
+      ]
+    ];
     return $build;
   }
 

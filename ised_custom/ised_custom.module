@@ -168,7 +168,7 @@ function ised_custom_system_breadcrumb_alter(\Drupal\Core\Breadcrumb\Breadcrumb 
   if ($route_match && $mlink = $route_match->getParameter('menu_link_content')) {
     $breadcrumb->addCacheableDependency($mlink);
   }
-  $breadcrumb->addCacheContexts(['url.path']);
+  $breadcrumb->addCacheContexts(['url.path', 'languages']);
   // End of cacheable dependency changes.
 
   if (!$is_admin) {

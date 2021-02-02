@@ -30,12 +30,14 @@ class CchSearchForm extends FormBase {
   public function buildForm(array $form, FormStateInterface $form_state) {
     $langcode = \Drupal::languageManager()->getCurrentLanguage()->getId();
     $op = \Drupal::request()->query->get('op');
-    $keywords = $op == t('Clear') ? '':\Drupal::request()->query->get('keys');
+    $keywords = \Drupal::request()->query->get('keys');
     $sector = $op == t('Clear') ? '':\Drupal::request()->query->get('search_sector');
     $province = $op == t('Clear') ? '':\Drupal::request()->query->get('search_province');
 
-    $sector_tid = \Drupal::request()->query->get('search_sector');
-    $province_tid = \Drupal::request()->query->get('search_province');
+    if ($op != t('Clear')) {
+      $sector_tid = \Drupal::request()->query->get('search_sector');
+      $province_tid = \Drupal::request()->query->get('search_province');
+    }
     
     if ($sector_tid) {
       $term = \Drupal\taxonomy\Entity\Term::load($sector_tid); 
@@ -66,17 +68,17 @@ class CchSearchForm extends FormBase {
     
     }
 
-    if ($province_tid) {
-      $term = \Drupal\taxonomy\Entity\Term::load($province_tid); 
-      if ($langcode != 'en') {
-        if ($term->hasTranslation($langcode)) {
-          $term = $term->getTranslation($langcode);
-        }
-      }
-      $provinceTermData[$term->id()] = $term->label();
-
-    }
-    else {
+//    if ($province_tid) {
+//      $term = \Drupal\taxonomy\Entity\Term::load($province_tid); 
+//      if ($langcode != 'en') {
+//        if ($term->hasTranslation($langcode)) {
+//          $term = $term->getTranslation($langcode);
+//        }
+//      }
+//      $provinceTermData[$term->id()] = $term->label();
+//
+//    }
+//    else {
       // Load provinces
       $provinceTerms =\Drupal::entityTypeManager()->getStorage('taxonomy_term')->loadTree('province');
       $provinceTermData = ['' => (string)t('Select a Province')];
@@ -92,7 +94,7 @@ class CchSearchForm extends FormBase {
           $provinceTermData[$term->tid] = $term->name;
         }
       }
-    }
+//    }
   
 
     $form['keys'] = [
@@ -110,6 +112,12 @@ class CchSearchForm extends FormBase {
 //    ];
 // Re-enable later after some thought.
 
+    $form['keywords'] = [
+      '#type' => 'text',
+      /*'#attributes' => ['placeholder' => (string)t('Search terms')],*/
+      '#value' => $keywords,
+      '#required' => false,
+    ];
     $form['search_province'] = [
       '#options' => $provinceTermData,
       '#type' => 'select',
@@ -127,6 +135,9 @@ class CchSearchForm extends FormBase {
     ];
     $form['#attributes']['class'][] = 'form-inline';
     $form['#method'] = 'GET';
+    $form['#cache'] = ['max-age' => 0];
+//    $form['#cache'] = ['url.path' => 0];
+//    $form['#cache']['contexts']['url.path'];
 
     return $form;
   }
