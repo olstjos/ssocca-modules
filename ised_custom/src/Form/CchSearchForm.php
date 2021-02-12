@@ -30,7 +30,7 @@ class CchSearchForm extends FormBase {
   public function buildForm(array $form, FormStateInterface $form_state) {
     $langcode = \Drupal::languageManager()->getCurrentLanguage()->getId();
     $op = \Drupal::request()->query->get('op');
-    $keywords = \Drupal::request()->query->get('keys');
+    $keywords = $op == t('Clear') ? '': \Drupal::request()->query->get('keys');
     $sector = $op == t('Clear') ? '':\Drupal::request()->query->get('search_sector');
     $province = $op == t('Clear') ? '':\Drupal::request()->query->get('search_province');
 
