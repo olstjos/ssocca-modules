@@ -23,19 +23,19 @@ class BreadcrumbBlock extends BlockBase{
     $current_path = \Drupal::service('path.current')->getPath();
     $path_args = explode('/', $current_path);
     $language = \Drupal::languageManager()->getCurrentLanguage()->getId();
-    
+
     foreach($path_args as $args){
       if (is_numeric($args)) {
         $tid=$args;
       }
     }
-    
+
 
     $ancestors = \Drupal::service('entity_type.manager')->getStorage("taxonomy_term")->loadAllParents($tid);
     $list = [];
     $list_tids=[];
     foreach ($ancestors as $term) {
-      
+
       if ($term->hasTranslation($language)) {
         $termTranslation = $term->getTranslation($language);
         $list[] = $termTranslation->label();
@@ -50,9 +50,9 @@ class BreadcrumbBlock extends BlockBase{
       $markup='<nav property="breadcrumb" aria-label="breadcrumb" role="navigation">
       <ol class="breadcrumb">
         <li class="breadcrumb-item"><a href="/">' . t('Start') . '</a></li>
-        <li class="breadcrumb-item active" aria-current="page">'.$list[0].'</li>
       </ol>
     </nav>';
+        //<li class="breadcrumb-item active" aria-current="page">'.$list[0].'</li>
 
     }
     else if(count($list) ==2){
@@ -60,9 +60,9 @@ class BreadcrumbBlock extends BlockBase{
       <ol class="breadcrumb">
         <li class="breadcrumb-item"><a href="/">' . t('Start') . '</a></li>
         <li class="breadcrumb-item"><a href="/'.$language.'/sector/term/'.$list_tids[1].'">'.$list[1].'</a></li>
-        <li class="breadcrumb-item active" aria-current="page">'.$list[0].'</li>
       </ol>
     </nav>';
+        //<li class="breadcrumb-item active" aria-current="page">'.$list[0].'</li>
 
     }
     else if(count($list) ==3){
@@ -71,9 +71,9 @@ class BreadcrumbBlock extends BlockBase{
         <li class="breadcrumb-item"><a href="/">' . t('Start') . '</a></li>
         <li class="breadcrumb-item"><a href="/'.$language.'/sector/term/'.$list_tids[2].'">'.$list[2].'</a></li>
         <li class="breadcrumb-item"><a href="/'.$language.'/sector/term/'.$list_tids[1].'">'.$list[1].'</a></li>
-        <li class="breadcrumb-item active" aria-current="page">'.$list[0].'</li>
       </ol>
     </nav>';
+        //<li class="breadcrumb-item active" aria-current="page">'.$list[0].'</li>
 
     }
     else if(count($list) ==4){
@@ -91,7 +91,7 @@ class BreadcrumbBlock extends BlockBase{
     else{
       $markup='';
     }
-    
+
     return [
       '#markup' => $markup,
       '#cache' => ['contexts' => ['url.path']], // Improves performance.
