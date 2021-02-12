@@ -30,11 +30,11 @@ class CchSearchForm extends FormBase {
   public function buildForm(array $form, FormStateInterface $form_state) {
     $langcode = \Drupal::languageManager()->getCurrentLanguage()->getId();
     $op = \Drupal::request()->query->get('op');
-    $keywords = $op == t('Clear') ? '': \Drupal::request()->query->get('keys');
-    $sector = $op == t('Clear') ? '':\Drupal::request()->query->get('search_sector');
-    $province = $op == t('Clear') ? '':\Drupal::request()->query->get('search_province');
+    //$keywords = $op == t('Clear') ? '': \Drupal::request()->query->get('keys');
+    $sector = $op == t('Show All') ? '':\Drupal::request()->query->get('search_sector');
+    $province = $op == t('Show All') ? '':\Drupal::request()->query->get('search_province');
 
-    if ($op != t('Clear')) {
+    if ($op != t('Show All')) {
       $sector_tid = \Drupal::request()->query->get('search_sector');
       $province_tid = \Drupal::request()->query->get('search_province');
     }
@@ -130,7 +130,7 @@ class CchSearchForm extends FormBase {
     ];
     $form['actions']['reset'] = [
       '#type' => 'submit',
-      '#value' => $this->t('Clear'),
+      '#value' => $this->t('Show All'),
       '#name' => 'op',
     ];
     $form['#attributes']['class'][] = 'form-inline';
