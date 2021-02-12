@@ -30,6 +30,7 @@ class BreadcrumbBlock extends BlockBase{
       }
     }
 
+    $current_route = \Drupal::routeMatch()->getRouteName();
 
     $ancestors = \Drupal::service('entity_type.manager')->getStorage("taxonomy_term")->loadAllParents($tid);
     $list = [];
@@ -45,14 +46,19 @@ class BreadcrumbBlock extends BlockBase{
       }
       $list_tids[]=$term->id();
     }
+
+    $extra_crumb = '';
+    if ($current_route == 'view.sector_browse.page_2') {
+      $extra_crumb = '<li class="breadcrumb-item active" aria-current="page">'.$list[0].'</li>';
+    }
   $markup='';
     if(count($list) ==1){
       $markup='<nav property="breadcrumb" aria-label="breadcrumb" role="navigation">
       <ol class="breadcrumb">
         <li class="breadcrumb-item"><a href="/">' . t('Start') . '</a></li>
+        ' . $extra_crumb . '
       </ol>
     </nav>';
-        //<li class="breadcrumb-item active" aria-current="page">'.$list[0].'</li>
 
     }
     else if(count($list) ==2){
@@ -60,9 +66,9 @@ class BreadcrumbBlock extends BlockBase{
       <ol class="breadcrumb">
         <li class="breadcrumb-item"><a href="/">' . t('Start') . '</a></li>
         <li class="breadcrumb-item"><a href="/'.$language.'/sector/term/'.$list_tids[1].'">'.$list[1].'</a></li>
+        ' . $extra_crumb . '
       </ol>
     </nav>';
-        //<li class="breadcrumb-item active" aria-current="page">'.$list[0].'</li>
 
     }
     else if(count($list) ==3){
@@ -71,9 +77,9 @@ class BreadcrumbBlock extends BlockBase{
         <li class="breadcrumb-item"><a href="/">' . t('Start') . '</a></li>
         <li class="breadcrumb-item"><a href="/'.$language.'/sector/term/'.$list_tids[2].'">'.$list[2].'</a></li>
         <li class="breadcrumb-item"><a href="/'.$language.'/sector/term/'.$list_tids[1].'">'.$list[1].'</a></li>
+        ' . $extra_crumb . '
       </ol>
     </nav>';
-        //<li class="breadcrumb-item active" aria-current="page">'.$list[0].'</li>
 
     }
     else if(count($list) ==4){
@@ -83,9 +89,10 @@ class BreadcrumbBlock extends BlockBase{
         <li class="breadcrumb-item"><a href="/'.$language.'/sector/term/'.$list_tids[3].'">'.$list[3].'</a></li>
         <li class="breadcrumb-item"><a href="/'.$language.'/sector/term/'.$list_tids[2].'">'.$list[2].'</a></li>
         <li class="breadcrumb-item"><a href="/'.$language.'/sector/term/'.$list_tids[1].'">'.$list[1].'</a></li>
-        <li class="breadcrumb-item active" aria-current="page">'.$list[0].'</li>
+        ' . $extra_crumb . '
       </ol>
     </nav>';
+        //<li class="breadcrumb-item active" aria-current="page">'.$list[0].'</li>
 
     }
     else{
